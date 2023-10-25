@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(celestial-mechanics VERSION 0.1.0 LANGUAGES CXX)
+project(gas-mkt VERSION 0.1.0 LANGUAGES CXX)
 
 include(cmake/Logging.cmake)
 include(cmake/Ccache.cmake)

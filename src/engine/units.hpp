@@ -10,7 +10,7 @@
 
 namespace phys {
 
-const std::size_t UniverseDim = 3;
+const std::size_t UniverseDim = 2;
 
 namespace detail {
     class UnitBase{}; // Needed for fast abstraction
@@ -90,6 +90,14 @@ constexpr auto operator*(const Unit<Num, Meter1, Sec1, KG1, K1, Mole1, Ampere1, 
     return Unit<Num, Meter1 + Meter2, Sec1 + Sec2, KG1 + KG2, K1 + K2, Mole1 + Mole2, Ampere1 + Ampere2, Candela1 + Candela2>{*lhs * *rhs};
 }
 
+template<typename Num, int Meter, int Sec, int KG, int K, int Mole, int Ampere, int Candela>
+constexpr auto operator*(const Unit<Num, Meter, Sec, KG, K, Mole, Ampere, Candela>& lhs, 
+               const Num& rhs) -> 
+               Unit<Num, Meter, Sec, KG, K, Mole, Ampere, Candela>
+{
+    return Unit<Num, Meter, Sec, KG, K, Mole, Ampere, Candela>{*lhs} *= rhs;
+}
+
 template<typename Num, int Meter1, int Sec1, int KG1, int K1, int Mole1, int Ampere1, int Candela1,
                        int Meter2, int Sec2, int KG2, int K2, int Mole2, int Ampere2, int Candela2>
 constexpr auto operator/(const Unit<Num, Meter1, Sec1, KG1, K1, Mole1, Ampere1, Candela1>& lhs, 
@@ -129,6 +137,8 @@ using AccelerationVal  = Unit<num_t, 1, -2>;     // m * s^-2
 
 using ForceVal         = Unit<num_t, 1, -2, 1>;  // kg * m * s^-2
 
+using PressionVal      = Unit<num_t, -1, -2, 1>;  // kg * m^-1 * s^-2
+
 using TimeVal          = Unit<num_t, 0, 1, 0>;   // s
 
 using MassVal          = Unit<num_t, 0, 0, 1>;   // kg
@@ -142,6 +152,8 @@ using ImpulseVal       = Unit<num_t, 1, -1, 1>;  // kg * m * s^-1
 using ImpulseMomentVal = Unit<num_t, 2, -1, 1>;  // kg * m^2 * s^-1
 
 using Length = LengthVal;
+
+using Pressure = PressionVal;
 
 template<SomeUnit T>
 using Vector = geom::Vector<T, UniverseDim, UnitTraits>;
@@ -239,10 +251,27 @@ auto Normalize(const Vector<T>& t) {
 }
 
 template<SomeUnit T>
-Vector<T> random() {
-    Vector<T> v{T{rand()}, T{rand()}, T{rand()}};
+Vector<T> randomSphere() {
+    Vector<T> v;
+    for (size_t i = 0; i < UniverseDim; ++i) {
+        v[i] = T{num_t{rand()}};
+    }
     v /= *v.Len();
     return v;
+}
+
+template<SomeUnit T>
+Vector<T> randomInCube(Vector<T> mx) {
+    Vector<T> v;
+    for (size_t i = 0; i < UniverseDim; ++i) {
+        v[i] = mx[i] * num_t{rand()};
+    }
+    v /= num_t{RAND_MAX};
+    return v;
+}
+
+static inline num_t randomShift() {
+    return num_t{(rand() - RAND_MAX / 2)} / num_t{RAND_MAX};
 }
 
 template<SomeUnit T, SomeUnit U>

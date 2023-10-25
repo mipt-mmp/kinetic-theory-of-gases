@@ -24,7 +24,6 @@ public:
   using num_t = double;
 private:
   num_t m_x = 0.;
-  num_t m_y = 0.;
 
   static const constexpr num_t Epsilon = 1. / (1l<<40);
 
@@ -83,7 +82,6 @@ public:
     if(lhs.m_x == std::numeric_limits<num_t>::infinity() || rhs.m_x == -std::numeric_limits<num_t>::infinity()) {
       return true;
     }
-
     return (lhs.m_x - rhs.m_x) >
            ((std::abs(lhs.m_x) < std::abs(rhs.m_x) ? std::abs(rhs.m_x)
                                                    : std::abs(lhs.m_x)) *

@@ -1,8 +1,7 @@
 
 add_library(phys STATIC 
-universe.cpp
-materialpoint.cpp
-geometry.hpp materialpoint.cpp materialpoint.hpp physconstants.hpp units.hpp universe.cpp universe.hpp
+chamber.cpp
+geometry.hpp gasAtom.cpp gasAtom.hpp physconstants.hpp units.hpp chamber.cpp chamber.hpp
 real.hpp
 )
 
