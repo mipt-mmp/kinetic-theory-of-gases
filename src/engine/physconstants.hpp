@@ -7,7 +7,8 @@ namespace phys {
 namespace consts{
 
 constexpr const auto G = 6.67430e-11_H * 1._m * 1._m / 1._kg / 1._kg;
-
+constexpr const auto k = 1.38064e-23_J / 1_K;
+constexpr const auto Dalton = 1.660e-27_kg;
 } // namespace consts
 namespace config{
 

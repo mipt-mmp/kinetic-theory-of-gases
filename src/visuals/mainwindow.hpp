@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <array>
 #include "chamberdisplayer.hpp"
 
 namespace Ui {
@@ -9,6 +10,7 @@ class MainWindow;
 }
 class PhysicsThread;
 class QTimer;
+class QLineEdit;
 
 class MainWindow : public QMainWindow
 {
@@ -25,6 +27,9 @@ private:
     Ui::MainWindow *ui;
     
     QTimer* m_timer;
+
+    std::array<QLineEdit*, 3> m_eDisplays;
+    std::array<QLineEdit*, 6> m_pDisplays;
     
     phys::Chamber m_chamber;
     phys::Chamber::Metrics m_chamberMetrics;
@@ -32,6 +37,9 @@ private:
     PhysicsThread* m_physThread;
 
 private slots:
+    void toggleSimulation(bool);
+    void setSimulationSpeed(int);
+
     void updateMetrics();
 };
 

@@ -9,6 +9,15 @@ void Chamber::fillRandom(size_t N, VelocityVal maxV, Mass m, Length r) {
     }
 }
 
+void Chamber::fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_t axis)
+{
+    for(size_t i = 0; i < N; ++i) {
+        Velocity v{};
+        v[axis] = maxV * randomShift();
+        m_atoms.push_back(GasAtom{randomInCube(m_chamberCorner) *= 0.9, v, m, r});
+    }
+}
+
 void Chamber::step() {
     for(size_t i = 0; i < m_atoms.size(); ++i) {
         m_atoms[i].move(m_dt);
@@ -18,16 +27,37 @@ void Chamber::step() {
         handleWallCollision(i);
     }
 
-    for(size_t i = 0; i < m_atoms.size(); ++i) {
-        for(size_t j = i+1; j < m_atoms.size(); ++j) {
-            handleCollision(i, j);
+    if(m_enableCollision) {
+        for(size_t i = 0; i < m_atoms.size(); ++i) {
+            for(size_t j = i+1; j < m_atoms.size(); ++j) {
+                handleCollision(i, j);
+            }
         }
     }
+    m_time += m_dt;
 }
 
 void Chamber::getMetrics(Metrics& metrics) const {
-    metrics.atoms = m_atoms;
     metrics.chamberCorner = m_chamberCorner;
+    metrics.atoms = m_atoms;
+
+    metrics.kineticEnergy = Energy{};
+
+    for(const auto& atom : m_atoms) {
+        metrics.kineticEnergy += atom.getKineticDistributed();
+    }
+
+    metrics.volume = Volume{1.};
+
+    for(size_t i = 0; i < UniverseDim; ++i) {
+        metrics.volume *= *m_chamberCorner[i]; //HACK: I sozdal. I ignore.
+    }
+
+    for(size_t i = 0; i < 2 * UniverseDim; ++i) {
+        metrics.pressure[i] = m_wallImpulse[i] /  (m_time - m_impulseMeasureStart) / (metrics.volume / m_chamberCorner[i/2]);
+        if(metrics.pressure[i] < Pressure{0.})
+            metrics.pressure[i] *= -1.;
+    }
 }
 
 bool Chamber::hasCollision(size_t i, size_t j) const {

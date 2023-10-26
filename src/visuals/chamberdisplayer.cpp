@@ -32,9 +32,9 @@ void ChamberDisplayer::paintEvent(QPaintEvent* /*event*/)
 {
     auto& atoms = m_chamberMetrics.atoms;
     if constexpr (phys::UniverseDim >= 3) {
-        // std::sort(atoms.begin(), atoms.end(), [](const phys::GasAtom& lhs, const phys::GasAtom& rhs) -> bool{
-        //     return lhs.getPos().Z() < rhs.getPos().Z();
-        // });
+         std::sort(atoms.begin(), atoms.end(), [](const phys::GasAtom& lhs, const phys::GasAtom& rhs) -> bool{
+             return lhs.getPos()[2] < rhs.getPos()[2];
+         });
     } 
     QPainter painter(this);
     QPen pen;
@@ -73,7 +73,7 @@ QColor ChamberDisplayer::getColor(const phys::GasAtom& atom) const {
         return Qt::gray;
     case ColorPolicy::HeatColor:
     {
-        int hue = std::min(200, static_cast<int>(*atom.getKinetic() * 300'000));
+        int hue = std::min(200, static_cast<int>(*atom.getKinetic() * 5e23));
         return QColor::fromHsv(200 - hue, 250, 250);
     }
     }

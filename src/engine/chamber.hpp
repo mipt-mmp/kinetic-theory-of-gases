@@ -11,10 +11,14 @@ class Chamber {
   Time m_time;
   Time m_dt = 0.01_sec;
 
+  bool m_enableCollision = true;
+
   static constexpr const Time min_dt = 1e-1_sec;
   static constexpr const Time max_dt = 1e4_sec;
   
+  Time m_impulseMeasureStart;
   std::array<phys::ImpulseVal, 6> m_wallImpulse;
+  
   Position m_chamberCorner;
 
 public:
@@ -31,9 +35,10 @@ public:
   struct Metrics {
       Position chamberCorner;
       std::vector<GasAtom> atoms;
+      Volume volume;
+      Vector<Energy> kineticEnergy;
+      std::array<Pressure, 2 * UniverseDim> pressure;
       Impulse impulse;
-      Energy energy;
-      std::array<phys::Pressure, 6> pressure;
       ImpulseMoment impulseMoment;
       Time time;
   };
@@ -42,6 +47,8 @@ public:
   Chamber(Position corner) : m_chamberCorner(corner) {}
 
   void fillRandom(size_t N, VelocityVal maxV, Mass m, Length r);
+
+  void fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_t axis = 0);
 
   void step();
 

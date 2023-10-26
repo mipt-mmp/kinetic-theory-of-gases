@@ -48,7 +48,9 @@ public:
         m_pos = newPos;
     }
 
-    void move(Time dt);
+    void move(Time dt) {
+        m_pos += m_v * dt;
+    }
 
     ImpulseMoment getImpulseMoment() const {
         auto impulse = m_v * m_mass;
@@ -62,6 +64,10 @@ public:
     Energy getKinetic() const { 
         Energy e = m_v.Len2() * m_mass / 2.l; 
         return e;
+    }
+
+    Vector<Energy> getKineticDistributed() const { 
+        return MulByElement(m_v, m_v) * m_mass /= 2.l; 
     }
 
 private:

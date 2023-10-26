@@ -10,7 +10,7 @@
 
 namespace phys {
 
-const std::size_t UniverseDim = 2;
+const std::size_t UniverseDim = 3;
 
 namespace detail {
     class UnitBase{}; // Needed for fast abstraction
@@ -98,6 +98,13 @@ constexpr auto operator*(const Unit<Num, Meter, Sec, KG, K, Mole, Ampere, Candel
     return Unit<Num, Meter, Sec, KG, K, Mole, Ampere, Candela>{*lhs} *= rhs;
 }
 
+template<typename Num, int Meter, int Sec, int KG, int K, int Mole, int Ampere, int Candela>
+constexpr auto operator*(const Num& lhs, const Unit<Num, Meter, Sec, KG, K, Mole, Ampere, Candela>& rhs) ->
+    Unit<Num, Meter, Sec, KG, K, Mole, Ampere, Candela>
+{
+    return Unit<Num, Meter, Sec, KG, K, Mole, Ampere, Candela>{*rhs} *= lhs;
+}
+
 template<typename Num, int Meter1, int Sec1, int KG1, int K1, int Mole1, int Ampere1, int Candela1,
                        int Meter2, int Sec2, int KG2, int K2, int Mole2, int Ampere2, int Candela2>
 constexpr auto operator/(const Unit<Num, Meter1, Sec1, KG1, K1, Mole1, Ampere1, Candela1>& lhs, 
@@ -131,13 +138,17 @@ using num_t = unreal_t;
 
 using LengthVal        = Unit<num_t, 1>;         // m
 
+using SquareVal        = Unit<num_t, 2>;         // m^2
+
+using VolumeVal        = Unit<num_t, UniverseDim>;         // m^3
+
 using VelocityVal      = Unit<num_t, 1, -1>;     // m * s^-1
 
 using AccelerationVal  = Unit<num_t, 1, -2>;     // m * s^-2
 
 using ForceVal         = Unit<num_t, 1, -2, 1>;  // kg * m * s^-2
 
-using PressionVal      = Unit<num_t, -1, -2, 1>;  // kg * m^-1 * s^-2
+using PressureVal      = decltype(ForceVal{} * LengthVal{} / VolumeVal{});  // kg * m^-1 * s^-2
 
 using TimeVal          = Unit<num_t, 0, 1, 0>;   // s
 
@@ -151,9 +162,14 @@ using ImpulseVal       = Unit<num_t, 1, -1, 1>;  // kg * m * s^-1
 
 using ImpulseMomentVal = Unit<num_t, 2, -1, 1>;  // kg * m^2 * s^-1
 
-using Length = LengthVal;
+using TemperatureVal = Unit<num_t, 0, 0, 0, 1>;  // kg * m^2 * s^-1
 
-using Pressure = PressionVal;
+
+using Length = LengthVal;
+using Square = SquareVal;
+using Volume = VolumeVal;
+using Pressure = PressureVal;
+using Temperature = TemperatureVal;
 
 template<SomeUnit T>
 using Vector = geom::Vector<T, UniverseDim, UnitTraits>;
@@ -234,6 +250,15 @@ auto operator*(const Vector<T>& lhs, const U& rhs) -> Vector<decltype(lhs[0] * r
     return ans;
 }
 
+template<SomeUnit T, SomeUnit U>
+auto MulByElement(const Vector<T>& lhs, const Vector<U>& rhs) -> Vector<decltype(lhs[0] * rhs[0])>{
+    Vector<decltype(lhs[0] * rhs[0])> ans{};
+    for(size_t i = 0; i < UniverseDim; ++i) {
+        ans[i] = lhs[i] * rhs[i];
+    }
+    return ans;
+}
+
 template<SomeUnit T, typename U>
 auto operator/(const Vector<T>& lhs, const U& rhs) -> Vector<decltype(lhs[0] / rhs)>{
     Vector<decltype(lhs[0] / rhs)> ans{};
@@ -248,6 +273,15 @@ template<SomeUnit T>
 auto Normalize(const Vector<T>& t) {
     assert(*t.Len() > 0.);
     return t / t.Len();
+}
+
+template<SomeUnit T>
+T Trace(const Vector<T>& t) {
+    T ans{};
+    for(size_t i = 0; i < UniverseDim; ++i) {
+        ans += t[i];
+    }
+    return ans;
 }
 
 template<SomeUnit T>
@@ -324,6 +358,11 @@ struct UnitFormatter<EnergyVal> {
     static constexpr std::string str() {return "J";}
 };
 
+template<>
+struct UnitFormatter<PressureVal> {
+    static constexpr std::string str() {return "Pa";}
+};
+
 }
 
 #if defined(PHYS_UNITS_PROVIDE_LITERALS)
@@ -335,6 +374,8 @@ PHYS_UNIT_LITERAL(Length, m)
 PHYS_UNIT_LITERAL(Time  , sec)
 PHYS_UNIT_LITERAL(Mass  , kg)
 PHYS_UNIT_LITERAL(ForceVal , H)
+PHYS_UNIT_LITERAL(EnergyVal, J)
+PHYS_UNIT_LITERAL(Temperature, K)
 #endif
 
 template<class IStream, typename Num, int Meter, int Sec, int KG, int K, int Mole, int Ampere, int Candela>
