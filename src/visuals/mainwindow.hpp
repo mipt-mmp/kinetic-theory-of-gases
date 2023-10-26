@@ -35,6 +35,8 @@ private:
 
     PhysicsThread* m_physThread;
 
+    size_t m_currentAtom = 0;
+
 private slots:
     void toggleSimulation(bool);
     void setSimulationSpeed(int);

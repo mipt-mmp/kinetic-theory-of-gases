@@ -14,6 +14,8 @@ class GasAtom {
     Mass m_mass;
     Length m_radius;
 
+    decltype(Energy{} * Time{}) m_sumE;
+    Time m_lastCollide;
 public:
     GasAtom(const Position& pos, const Velocity& v, const Mass& m, const Length radius)
         : m_pos(pos)
@@ -37,6 +39,18 @@ public:
         m_mass = newMass;
     }
 
+    void collide(Time t) {
+        m_lastCollide = t;
+    }
+
+    Length getFreeFlight(Time t) {
+        return (m_v * (t - m_lastCollide)).Len();
+    }
+
+    Energy getAverageEnergy(Time t) {
+        return m_sumE / t;
+    }
+
     const Velocity& getVelocity() const {
         return m_v;
     }
@@ -54,7 +68,8 @@ public:
     }
 
     void move(Time dt) {
-        m_pos += m_v * dt;
+        m_pos  += m_v * dt;
+        m_sumE += getKinetic() * dt;
     }
 
     ImpulseMoment getImpulseMoment() const {
