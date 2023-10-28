@@ -25,8 +25,9 @@ void PhysicsThread::run() {
         if (m_period != -1) {
             long time = static_cast<long>(std::pow(1.2, m_period));
             time = std::min(time, 5'000'000l);
-            if (time < 0)
+            if (time < 0) {
                 time = 5'000'000l;
+            }
             usleep(time);
         } else {
             for (size_t i = 0; i < 100'000; ++i) {

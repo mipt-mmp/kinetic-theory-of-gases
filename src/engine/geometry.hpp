@@ -36,7 +36,8 @@ struct Vector {
 
     template <typename... Ts>
 
-    requires(std::is_same_v<T, Ts>&&...) constexpr Vector(Ts... ts)
+        requires(std::is_same_v<T, Ts> && ...)
+    constexpr Vector(Ts... ts)
         : m_coord{ts...} {
         static_assert(sizeof...(Ts) <= dim);
     }
