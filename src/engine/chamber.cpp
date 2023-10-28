@@ -5,21 +5,27 @@ namespace phys {
 ChamberBlockRunner::ChamberBlockRunner(Chamber& chamber)
     : m_chamber(chamber) {}
 
-ChamberBlockRunner::ChamberBlockRunner(Chamber& chamber, uint32_t blockId)
+ChamberBlockRunner::ChamberBlockRunner(Chamber& chamber, uint64_t blockId)
     : m_chamber(chamber)
     , m_blockId(blockId) {}
 
-uint32_t ChamberBlockRunner::getBlockId() const {
+uint64_t ChamberBlockRunner::getBlockId() const {
     return m_blockId;
 }
 
-void ChamberBlockRunner::setBlockId(uint32_t blockId) {
+void ChamberBlockRunner::setBlockId(uint64_t blockId) {
     m_blockId = blockId;
 }
 
 void ChamberBlockRunner::run() {
-    ;
+    if (m_blockId == 0) {
+        m_chamber.step();
+    }
 }
+
+Chamber::Chamber(Position corner, size_t blocksNumber)
+    : m_chamberCorner(corner)
+    , m_blocksNumber(blocksNumber) {}
 
 void Chamber::fillRandom(size_t N, VelocityVal maxV, Mass m, Length r) {
     for (size_t i = 0; i < N; ++i) {
@@ -137,6 +143,10 @@ void Chamber::handleWallCollision(size_t i) {
             m_atoms[i].setVelocity(v);
         }
     }
+}
+
+size_t Chamber::getBlocksNumber() const {
+    return m_blocksNumber;
 }
 
 } // namespace phys

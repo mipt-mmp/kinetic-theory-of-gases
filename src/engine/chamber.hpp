@@ -14,15 +14,15 @@ class Chamber;
 class ChamberBlockRunner : public QRunnable {
 public:
     explicit ChamberBlockRunner(Chamber& chamber);
-    ChamberBlockRunner(Chamber& chamber, uint32_t blockId);
+    ChamberBlockRunner(Chamber& chamber, uint64_t blockId);
 
-    uint32_t getBlockId() const;
-    void setBlockId(uint32_t blockId);
+    uint64_t getBlockId() const;
+    void setBlockId(uint64_t blockId);
 
     void run() final;
 
 private:
-    uint32_t m_blockId;
+    uint64_t m_blockId;
     Chamber& m_chamber;
 };
 
@@ -51,8 +51,7 @@ public:
     };
 
 public:
-    Chamber(Position corner)
-        : m_chamberCorner(corner) {}
+    explicit Chamber(Position corner, size_t blocksNumber = 1);
 
     void fillRandom(size_t N, VelocityVal maxV, Mass m, Length r);
 
@@ -66,6 +65,8 @@ public:
         m_dt = dt;
     }
 
+    size_t getBlocksNumber() const;
+
 private:
     bool hasCollision(size_t i, size_t j) const;
 
@@ -75,7 +76,6 @@ private:
 
 private:
     std::vector<GasAtom> m_atoms;
-    std::vector<ChamberBlockRunner> m_blockRunners;
 
     Time m_time;
     Time m_dt = 0.01_sec;
@@ -89,6 +89,8 @@ private:
     std::array<phys::ImpulseVal, 6> m_wallImpulse;
 
     Position m_chamberCorner;
+
+    size_t m_blocksNumber;
 };
 
 } // namespace phys

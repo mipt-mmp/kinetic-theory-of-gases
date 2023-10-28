@@ -19,7 +19,10 @@ void PhysicsThread::run() {
                 m_allow_run.wait(&m_mutex);
             }
 
-            m_chamber.step();
+            for (size_t i = 0; i < m_chamber.getBlocksNumber(); i++) {
+                auto blockRunner = new phys::ChamberBlockRunner(m_chamber, i);
+                QThreadPool::globalInstance()->start(blockRunner);
+            }
         }
 
         if (m_period != -1) {
