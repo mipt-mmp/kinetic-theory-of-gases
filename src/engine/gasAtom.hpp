@@ -7,13 +7,6 @@
 namespace phys {
 
 class GasAtom {
-
-    // State characteristics
-    Position m_pos;
-    Velocity m_v;
-    Mass m_mass;
-    Length m_radius;
-
 public:
     GasAtom(const Position& pos, const Velocity& v, const Mass& m, const Length radius)
         : m_pos(pos)
@@ -76,6 +69,14 @@ public:
     }
 
 private:
+    // State characteristics
+    Position m_pos;
+    Velocity m_v;
+    Mass m_mass;
+    Length m_radius;
+   
+    // Meta information
+    uint64_t m_blockId;
 };
 
 } // namespace phys
