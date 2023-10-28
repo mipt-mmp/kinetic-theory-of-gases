@@ -1,33 +1,33 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 
-#include "physicsthread.hpp"
 #include "physconstants.hpp"
-#include <QTimer>
+#include "physicsthread.hpp"
 #include <QDebug>
+#include <QTimer>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    m_chamber({1e-8_m, 1e-8_m, 1e-9_m}),
-    m_physThread(new PhysicsThread(m_chamber, this))
-{
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+    , m_chamber({1e-8_m, 1e-8_m, 1e-9_m})
+    , m_physThread(new PhysicsThread(m_chamber, this)) {
 
     m_cd = new ChamberDisplayer(m_chamberMetrics, this);
     m_cd->setGeometry(rect());
     m_cd->setScale(1e-8_m);
-//    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
+    //    31e-12_m);
     m_chamber.fillRandomAxis(1000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
 
     m_timer = new QTimer(this);
     m_timer->setInterval(1000 / 60); // 60 fps
     m_timer->setSingleShot(false);
-    connect(m_timer,SIGNAL(timeout()), this, SLOT(updateMetrics()));
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(updateMetrics()));
     m_timer->start();
 
     m_chamber.setDT(1e-14_sec);
     m_physThread->setPeriod(0);
-    
+
     ui->setupUi(this);
 
     connect(ui->startButton, SIGNAL(toggled(bool)), this, SLOT(toggleSimulation(bool)));
@@ -44,30 +44,26 @@ MainWindow::MainWindow(QWidget *parent) :
     m_pDisplays[4] = ui->pDisplay31;
     m_pDisplays[5] = ui->pDisplay32;
 
-//    m_physThread->cont();
+    //    m_physThread->cont();
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     delete ui;
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event)
-{
+void MainWindow::resizeEvent(QResizeEvent* event) {
     QMainWindow::resizeEvent(event);
     m_cd->setGeometry(rect());
 }
 
-void MainWindow::toggleSimulation(bool run)
-{
-    if(run)
+void MainWindow::toggleSimulation(bool run) {
+    if (run)
         m_physThread->cont();
     else
         m_physThread->stop();
 }
 
-void MainWindow::setSimulationSpeed(int x)
-{
+void MainWindow::setSimulationSpeed(int x) {
     m_physThread->setPeriod(x);
 }
 
@@ -80,7 +76,7 @@ void MainWindow::updateMetrics() {
 
     phys::Energy totalE{};
 
-    for(size_t i = 0; i < phys::UniverseDim; i++) {
+    for (size_t i = 0; i < phys::UniverseDim; i++) {
         ss << m_chamberMetrics.kineticEnergy[i];
         totalE += m_chamberMetrics.kineticEnergy[i];
         m_eDisplays[i]->setText(str);
@@ -91,17 +87,16 @@ void MainWindow::updateMetrics() {
     ui->eDisplayTotal->setText(str);
     str.clear();
 
-    ss << totalE * (phys::num_t{2./3.} / phys::num_t{m_chamberMetrics.atoms.size()}) / phys::consts::k;
+    ss << totalE * (phys::num_t{2. / 3.} / phys::num_t{m_chamberMetrics.atoms.size()}) /
+              phys::consts::k;
     ui->tempDIsplay->setText(str);
     str.clear();
 
-    for(size_t i = 0; i < 2 * phys::UniverseDim; i++) {
+    for (size_t i = 0; i < 2 * phys::UniverseDim; i++) {
         ss << m_chamberMetrics.pressure[i];
         m_pDisplays[i]->setText(str);
         str.clear();
     }
-//    ss << m_ud->getUniverseMetrics().energy;
-//     ui->eDisplay->setText(str);
+    //    ss << m_ud->getUniverseMetrics().energy;
+    //     ui->eDisplay->setText(str);
 }
-
-

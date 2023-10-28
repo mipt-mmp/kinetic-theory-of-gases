@@ -2,22 +2,23 @@
 #define UNIVERSEDISPLAYER_HPP
 
 #include "chamber.hpp"
-#include <QWidget>
 #include <QVector>
+#include <QWidget>
 
 class QSpinBox;
 class QPushButton;
 
-class ChamberDisplayer : public QWidget
-{
+class ChamberDisplayer : public QWidget {
     Q_OBJECT
 public:
-    explicit ChamberDisplayer(phys::Chamber::Metrics& metrics, QWidget *parent = nullptr);
+    explicit ChamberDisplayer(phys::Chamber::Metrics& metrics, QWidget* parent = nullptr);
     ~ChamberDisplayer() override;
 
     [[nodiscard]] const phys::Chamber::Metrics& getUniverseMetrics() const;
 
-    void setScale(phys::LengthVal scale) { m_scale = scale; }
+    void setScale(phys::LengthVal scale) {
+        m_scale = scale;
+    }
 
     enum class ColorPolicy {
         SingleColor,

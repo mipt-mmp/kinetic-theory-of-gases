@@ -1,21 +1,26 @@
 #ifndef ENGINE_MATERIALPOINT_HPP
 #define ENGINE_MATERIALPOINT_HPP
 
-#include "units.hpp"
 #include "geometry.hpp"
+#include "units.hpp"
 
 namespace phys {
 
 class GasAtom {
 
-// State characteristics
+    // State characteristics
     Position m_pos;
     Velocity m_v;
     Mass m_mass;
     Length m_radius;
+
 public:
-    GasAtom(const Position& pos, const Velocity& v, const Mass& m, const Length radius) : m_pos(pos), m_v(v), m_mass(m), m_radius(radius) {
-        if(*m_mass == 0) {
+    GasAtom(const Position& pos, const Velocity& v, const Mass& m, const Length radius)
+        : m_pos(pos)
+        , m_v(v)
+        , m_mass(m)
+        , m_radius(radius) {
+        if (*m_mass == 0) {
             std::cerr << "Warning: too small mass: " << m_mass << "\n";
         }
     }
@@ -61,18 +66,18 @@ public:
         return m_v * m_mass;
     }
 
-    Energy getKinetic() const { 
-        Energy e = m_v.Len2() * m_mass / 2.l; 
+    Energy getKinetic() const {
+        Energy e = m_v.Len2() * m_mass / 2.l;
         return e;
     }
 
-    Vector<Energy> getKineticDistributed() const { 
-        return MulByElement(m_v, m_v) * m_mass /= 2.l; 
+    Vector<Energy> getKineticDistributed() const {
+        return MulByElement(m_v, m_v) * m_mass /= 2.l;
     }
 
 private:
 };
 
-}
+} // namespace phys
 
 #endif /* ENGINE_MATERIALPOINT_HPP */

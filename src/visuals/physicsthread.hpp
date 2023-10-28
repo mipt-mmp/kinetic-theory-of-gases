@@ -1,20 +1,20 @@
 #ifndef PHYSICSTHREAD_HPP
 #define PHYSICSTHREAD_HPP
 
-#include <QThread>
 #include <QMutex>
+#include <QThread>
 #include <QWaitCondition>
 
 #include "chamber.hpp"
 
-class PhysicsThread : public QThread
-{
+class PhysicsThread : public QThread {
     Q_OBJECT
 public:
     PhysicsThread(phys::Chamber& universe, QObject* parent = nullptr);
     ~PhysicsThread() override;
 
 public slots:
+
     void stop() {
         m_mutex.lock();
         m_stopped = true;
@@ -24,7 +24,7 @@ public slots:
 
     void cont() {
         m_mutex.lock();
-        if(m_stopped) {
+        if (m_stopped) {
             m_stopped = false;
             m_allow_run.wakeAll();
             emit toggled(true);
@@ -35,7 +35,7 @@ public slots:
     void toggle() {
         m_mutex.lock();
         m_stopped ^= 1;
-        if(m_stopped) {
+        if (m_stopped) {
             m_mutex.unlock();
             emit toggled(false);
             return;
