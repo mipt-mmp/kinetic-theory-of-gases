@@ -9,6 +9,8 @@ namespace phys {
 
 const Time defaultDeltaTime = 1e4_sec;
 
+class Chamber;
+
 class ChamberBlockRunner : public QRunnable {
 public:
     explicit ChamberBlockRunner(Chamber& chamber);
@@ -22,7 +24,7 @@ public:
 private:
     uint32_t m_blockId;
     Chamber& m_chamber;
-}
+};
 
 class Chamber {
     friend class ChamberBlockRunner;

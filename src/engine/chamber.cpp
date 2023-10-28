@@ -9,7 +9,7 @@ ChamberBlockRunner::ChamberBlockRunner(Chamber& chamber, uint32_t blockId)
     : m_chamber(chamber)
     , m_blockId(blockId) {}
 
-uint32_t ChamberBlockRunner::getBlockId() {
+uint32_t ChamberBlockRunner::getBlockId() const {
     return m_blockId;
 }
 
@@ -35,10 +35,6 @@ void Chamber::fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_
         v[axis] = maxV * randomShift();
         m_atoms.push_back(GasAtom{randomInCube(m_chamberCorner) *= 0.9, v, m, r});
     }
-}
-
-void Chamber::run() {
-    step();
 }
 
 void Chamber::step() {
