@@ -6,18 +6,22 @@
 #include <QDebug>
 #include <QTimer>
 
+const constexpr phys::Time Step = 5e-14_sec; 
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_chamber({1e-8_m, 1e-8_m, 1e-9_m})
+    , m_chamber({5e-8_m, 5e-8_m, 1e-8_m})
+    // , m_chamber({5e-6_m, 5e-6_m})
     , m_physThread(new PhysicsThread(m_chamber, this)) {
 
     m_cd = new ChamberDisplayer(m_chamberMetrics, this);
     m_cd->setGeometry(rect());
-    m_cd->setScale(1e-8_m);
+    m_cd->setScale(5e-8_m);
     //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
     //    31e-12_m);
-    m_chamber.fillRandomAxis(1000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    m_chamber.fillRandomAxis(10'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    // m_chamber.fillRandom(10'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
 
     m_timer = new QTimer(this);
     m_timer->setInterval(1000 / 60); // 60 fps
@@ -25,7 +29,9 @@ MainWindow::MainWindow(QWidget* parent)
     connect(m_timer, SIGNAL(timeout()), this, SLOT(updateMetrics()));
     m_timer->start();
 
-    m_chamber.setDT(1e-14_sec);
+    m_elapsed.start();
+
+    m_chamber.setDT(Step);
     m_physThread->setPeriod(0);
 
     ui->setupUi(this);
@@ -57,8 +63,10 @@ void MainWindow::resizeEvent(QResizeEvent* event) {
 }
 
 void MainWindow::toggleSimulation(bool run) {
-    if (run)
+    if (run) {
         m_physThread->cont();
+        m_elapsed.start();
+    }
     else
         m_physThread->stop();
 }
@@ -115,4 +123,8 @@ void MainWindow::updateMetrics() {
     ss << m_chamberMetrics.atoms[ui->chooseAtom->value()].getAverageEnergy(m_chamberMetrics.time) * phys::num_t{2./3.} / phys::consts::k;
     ui->avgEDisplay->setText(str);
     str.clear();
+
+
+    double ticks = static_cast<double>(*(m_chamberMetrics.time / Step));
+    ui->tps->setValue(1000 * ticks / m_elapsed.elapsed());
 }

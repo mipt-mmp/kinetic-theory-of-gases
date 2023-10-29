@@ -19,30 +19,53 @@ void Chamber::fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_
 }
 
 void Chamber::step() {
-    for (size_t i = 0; i < m_atoms.size(); ++i) {
-        m_atoms[i].move(m_dt);
-    }
+    m_atoms.move(m_dt);
 
-    for (size_t i = 0; i < m_atoms.size(); ++i) {
-        handleWallCollision(i);
-    }
+    // for (size_t i = 0; i < m_atoms.size(); ++i) {
+    //     handleWallCollision(i);
+    // }
+
+    m_atoms.handleWallCollisions();
 
     if (m_enableCollision) {
+#if 0
         for (size_t i = 0; i < m_atoms.size(); ++i) {
             for (size_t j = i + 1; j < m_atoms.size(); ++j) {
                 handleCollision(i, j);
             }
         }
+#else 
+        m_atoms.countCollisions();
+        const auto& cls = m_atoms.getCollisions();
+
+        // std::vector<std::pair<size_t, size_t>> ccsl;
+        // for (size_t i = 0; i < m_atoms.size(); ++i) {
+        //     for (size_t j = i + 1; j < m_atoms.size(); ++j) {
+        //         if(hasCollision(i, j)){
+        //             ccsl.push_back({i, j});
+        //         }
+        //     }
+        // }
+        // assert(ccsl == cls);
+        for(auto [i, j] : cls) {
+            handleCollision(i, j);    
+        }
+#endif
     }
     m_time += m_dt;
 }
 
 void Chamber::getMetrics(Metrics& metrics) const {
     metrics.chamberCorner = m_chamberCorner;
-    metrics.atoms = m_atoms;
+
+    metrics.atoms.resize(m_atoms.size());
+    for(size_t i = 0; i < m_atoms.size(); ++i) {
+        metrics.atoms[i] = m_atoms.getAtom(i);
+    }
     metrics.kineticEnergy = Energy{};
     metrics.time = m_time;
-    for(const auto& atom : m_atoms) {
+
+    for(const auto& atom : metrics.atoms) {
         metrics.kineticEnergy += atom.getKineticDistributed();
     }
 
@@ -53,14 +76,14 @@ void Chamber::getMetrics(Metrics& metrics) const {
     }
 
     for (size_t i = 0; i < 2 * UniverseDim; ++i) {
-        metrics.pressure[i] = m_wallImpulse[i] / (m_time - m_impulseMeasureStart) /
+        metrics.pressure[i] = m_atoms.getWallImpulse(i) / (m_time - m_impulseMeasureStart) /
                               (metrics.volume / m_chamberCorner[i / 2]);
         if (metrics.pressure[i] < Pressure{0.})
             metrics.pressure[i] *= -1.;
     }
 }
 
-bool Chamber::hasCollision(size_t i, size_t j) const {
+bool Chamber::hasCollision(size_t i, size_t j) {
     return (m_atoms[i].getPos() - m_atoms[j].getPos()).Len2() <
            (m_atoms[i].getRadius() + m_atoms[j].getRadius()) *
                (m_atoms[i].getRadius() + m_atoms[j].getRadius());
@@ -85,6 +108,10 @@ void Chamber::handleCollision(size_t i, size_t j) {
 
     VelocityVal pj1 = (v1, axis);
     VelocityVal pj2 = (v2, axis);
+
+    if(pj1 < pj2) {
+        return;
+    }
 
     v1 -= axis * pj1;
     v2 -= axis * pj2;

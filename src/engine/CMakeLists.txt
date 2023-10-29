@@ -1,7 +1,7 @@
 
 add_library(phys STATIC 
 chamber.cpp
-geometry.hpp gasAtom.cpp gasAtom.hpp physconstants.hpp units.hpp chamber.cpp chamber.hpp
+geometry.hpp gasAtom.cpp gasAtom.hpp physconstants.hpp units.hpp chamber.cpp chamber.hpp ballsCollection.hpp ballsCollection.cpp
 real.hpp
 )
 

@@ -1,6 +1,7 @@
 #ifndef ENGINE_UNIVERSE_HPP
 #define ENGINE_UNIVERSE_HPP
 
+#include "ballsCollection.hpp"
 #include "gasAtom.hpp"
 
 namespace phys {
@@ -8,7 +9,9 @@ namespace phys {
 const Time defaultDeltaTime = 1e4_sec;
 
 class Chamber {
-    std::vector<GasAtom> m_atoms;
+    Position m_chamberCorner;
+    // std::vector<GasAtom> m_atoms;
+    BallsCollection m_atoms;
     Time m_time;
     Time m_dt = 0.01_sec;
 
@@ -20,7 +23,6 @@ class Chamber {
     Time m_impulseMeasureStart;
     std::array<phys::ImpulseVal, 6> m_wallImpulse;
 
-    Position m_chamberCorner;
 
 public:
     enum ChamberWall {
@@ -45,7 +47,10 @@ public:
 
 public:
     Chamber(Position corner)
-        : m_chamberCorner(corner) {}
+        : m_chamberCorner(corner), m_atoms(std::max(corner.X(), corner.Y()), 1_sec) {
+            m_atoms.setWalls(corner);
+            m_atoms.setCellSize(1e-9_m);
+        }
 
     void fillRandom(size_t N, VelocityVal maxV, Mass m, Length r);
 
@@ -60,7 +65,7 @@ public:
     }
 
 private:
-    bool hasCollision(size_t i, size_t j) const;
+    bool hasCollision(size_t i, size_t j);
 
     void handleCollision(size_t i, size_t j);
 

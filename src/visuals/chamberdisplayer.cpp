@@ -31,12 +31,12 @@ void ChamberDisplayer::rescale() {}
 
 void ChamberDisplayer::paintEvent(QPaintEvent* /*event*/) {
     auto& atoms = m_chamberMetrics.atoms;
-    if constexpr (phys::UniverseDim >= 3) {
-        std::sort(atoms.begin(), atoms.end(),
-                  [](const phys::GasAtom& lhs, const phys::GasAtom& rhs) -> bool {
-                      return lhs.getPos()[2] < rhs.getPos()[2];
-                  });
-    }
+    // if constexpr (phys::UniverseDim >= 3) {
+    //     std::sort(atoms.begin(), atoms.end(),
+    //               [](const phys::GasAtom& lhs, const phys::GasAtom& rhs) -> bool {
+    //                   return lhs.getPos()[2] < rhs.getPos()[2];
+    //               });
+    // }
     QPainter painter(this);
     QPen pen;
     pen.setWidth(3);
@@ -50,7 +50,10 @@ void ChamberDisplayer::paintEvent(QPaintEvent* /*event*/) {
     painter.setPen(pen);
     QBrush brush(Qt::SolidPattern);
     painter.setBrush(brush);
+    size_t i = 0;
     for (auto& atom : atoms) {
+        if(i++ > 5'000)
+            break;
         QColor color = getColor(atom);
         brush.setColor(color);
         pen.setColor(color);
@@ -58,6 +61,7 @@ void ChamberDisplayer::paintEvent(QPaintEvent* /*event*/) {
         painter.setBrush(brush);
 
         int radius = static_cast<int>(pixscale * *(atom.getRadius() / m_scale));
+        radius = std::max(1, radius);
         painter.drawEllipse(static_cast<int>(pixscale * *((atom.getPos().X()) / m_scale)) - radius,
                             static_cast<int>(pixscale * *((atom.getPos().Y()) / m_scale)) - radius,
                             2 * radius, 2 * radius);
