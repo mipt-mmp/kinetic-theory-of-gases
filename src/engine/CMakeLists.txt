@@ -2,14 +2,15 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 qt_standard_project_setup()
 
 qt_add_library(phys STATIC
-    chamber.cpp
-    geometry.hpp
     gasAtom.cpp
     gasAtom.hpp
-    physconstants.hpp
-    units.hpp
     chamber.cpp
     chamber.hpp
+    sync.cpp
+    sync.hpp
+    units.hpp
+    geometry.hpp
+    physconstants.hpp
     real.hpp
 )
 

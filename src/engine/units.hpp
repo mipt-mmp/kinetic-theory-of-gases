@@ -31,6 +31,10 @@ public:
     constexpr explicit Unit(const Num& t)
         : num_(t) {}
 
+    constexpr Num inner() {
+        return num_;
+    }
+
     constexpr Num& operator*() {
         return num_;
     }

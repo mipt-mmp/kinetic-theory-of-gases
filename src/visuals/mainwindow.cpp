@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_cd->setScale(1e-8_m);
     //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
     //    31e-12_m);
-    m_chamber.fillRandomAxis(1000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    m_chamber.fillRandomAxis(10000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
 
     m_timer = new QTimer(this);
     m_timer->setInterval(1000 / 60); // 60 fps
@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(m_timer, SIGNAL(timeout()), this, SLOT(updateMetrics()));
     m_timer->start();
 
-    m_chamber.setDT(1e-14_sec);
+    m_chamber.setDt(1e-14_sec);
     m_physThread->setPeriod(0);
 
     ui->setupUi(this);

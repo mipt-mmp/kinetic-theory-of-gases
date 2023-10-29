@@ -18,27 +18,55 @@ void ChamberBlockRunner::setBlockId(uint64_t blockId) {
 }
 
 void ChamberBlockRunner::run() {
-    if (m_blockId == 0) {
-        auto atomsNumber = m_chamber.m_atoms.size();
-        bool collisionsEnabled = m_chamber.m_enableCollision;
+    auto start = m_blockId;
+    auto end = m_chamber.getBlocksNumber();
+    auto step = Chamber::k_maxThreads;
 
-        for (size_t i = 0; i < atomsNumber; ++i) {
-            m_chamber.handleWallCollision(i);
-        }
-    
-        if (collisionsEnabled) {
-            for (size_t i = 0; i < atomsNumber; ++i) {
-                for (size_t j = i + 1; j < atomsNumber; ++j) {
-                    m_chamber.handleCollision(i, j);
-                }
-            }
+    for (auto i = start; i < end; i += step) {
+        handleCollisionsForBlock(i);
+    }
+
+    m_chamber.m_blockBarrier.wait();
+}
+
+void ChamberBlockRunner::handleCollisionsForBlock(size_t blockId) {
+    auto& block = m_chamber.m_blocks[blockId];
+    bool doCollide = m_chamber.m_enableCollisions;
+
+    auto start = block.blockStart;
+    auto end = block.blockEnd;
+
+    for (size_t i = start; i < end; i++) {
+        m_chamber.handleWallCollision(i);
+    }
+
+    if (!doCollide) {
+        return;
+    }
+
+    for (size_t i = start; i < end; i++) {
+        for (size_t j = i + 1; j < end; j++) {
+            m_chamber.handleCollision(i, j);
         }
     }
 }
 
-Chamber::Chamber(Position corner, size_t blocksNumber)
+ChamberMutexUnlocker::ChamberMutexUnlocker(Chamber& chamber)
+    : m_chamber(chamber) {}
+
+void ChamberMutexUnlocker::run() {
+    m_chamber.m_blockBarrier.wait();
+    m_chamber.m_mutex.unlock();
+}
+
+Chamber::Chamber(Position corner)
     : m_chamberCorner(corner)
-    , m_blocksNumber(blocksNumber) {}
+    , m_blocks(std::vector<ChamberBlock>(std::pow(k_blocksPerDim, k_maxDimensions)))
+    , m_blockBarrier(QSync::QBarrier(k_maxThreads + 1)) {
+
+    // Extra 1 for ChamberMutexUnlocker
+    m_threadPool.setMaxThreadCount(k_maxThreads + 1);
+}
 
 void Chamber::fillRandom(size_t N, VelocityVal maxV, Mass m, Length r) {
     for (size_t i = 0; i < N; ++i) {
@@ -57,10 +85,20 @@ void Chamber::fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_
 }
 
 void Chamber::step() {
+    m_mutex.lock();
+
     for (size_t i = 0; i < m_atoms.size(); ++i) {
         m_atoms[i].move(m_dt);
     }
 
+    updateBlockForAllAtoms();
+    updateBlockSegments();
+
+    for (size_t i = 0; i < k_maxThreads; i++) {
+        m_threadPool.start(new ChamberBlockRunner(*this, i));
+    }
+
+    m_threadPool.start(new ChamberMutexUnlocker(*this));
     m_time += m_dt;
 }
 
@@ -83,9 +121,19 @@ void Chamber::getMetrics(Metrics& metrics) const {
     for (size_t i = 0; i < 2 * UniverseDim; ++i) {
         metrics.pressure[i] = m_wallImpulse[i] / (m_time - m_impulseMeasureStart) /
                               (metrics.volume / m_chamberCorner[i / 2]);
-        if (metrics.pressure[i] < Pressure{0.})
+
+        if (metrics.pressure[i] < Pressure{0.}) {
             metrics.pressure[i] *= -1.;
+        }
     }
+}
+
+size_t Chamber::getBlocksNumber() const {
+    return m_blocks.size();
+}
+
+void Chamber::setDt(Time dt) {
+    m_dt = dt;
 }
 
 bool Chamber::hasCollision(size_t i, size_t j) const {
@@ -95,8 +143,9 @@ bool Chamber::hasCollision(size_t i, size_t j) const {
 }
 
 void Chamber::handleCollision(size_t i, size_t j) {
-    if (!hasCollision(i, j))
+    if (!hasCollision(i, j)) {
         return;
+    }
 
     Velocity v1 = m_atoms[i].getVelocity();
     Velocity v2 = m_atoms[j].getVelocity();
@@ -146,8 +195,51 @@ void Chamber::handleWallCollision(size_t i) {
     }
 }
 
-size_t Chamber::getBlocksNumber() const {
-    return m_blocksNumber;
+void Chamber::updateBlockForAllAtoms() {
+    for (size_t i = 0; i < m_atoms.size(); i++) {
+        updateBlockForSingleAtom(i);
+    }
+}
+
+void Chamber::updateBlockForSingleAtom(size_t atomId) {
+    auto& atom = m_atoms[atomId];
+
+    auto xCellSize = m_chamberCorner.X() / static_cast<double>(k_blocksPerDim);
+    auto yCellSize = m_chamberCorner.Y() / static_cast<double>(k_blocksPerDim);
+    auto zCellSize = m_chamberCorner.Z() / static_cast<double>(k_blocksPerDim);
+
+    const auto k_xShift = 0;
+    const auto k_yShift = 8;
+    const auto k_zShift = 16;
+
+    auto newBlock = (static_cast<uint64_t>((atom.getPos().X() / xCellSize).inner()) << k_xShift) |
+                    (static_cast<uint64_t>((atom.getPos().Y() / yCellSize).inner()) << k_yShift) |
+                    (static_cast<uint64_t>((atom.getPos().Z() / zCellSize).inner()) << k_zShift);
+
+    atom.setBlockId(newBlock);
+}
+
+void Chamber::updateBlockSegments() {
+    assert(!m_atoms.empty());
+
+    std::sort(m_atoms.begin(), m_atoms.end());
+
+    auto blockStart = 0;
+    auto blockId = 0;
+
+    auto lastId = m_atoms[0].getBlockId();
+
+    for (size_t i = 0; i < m_atoms.size(); i++) {
+        auto currId = m_atoms[i].getBlockId();
+
+        if (currId != lastId) {
+            lastId = currId;
+            m_blocks[blockId].blockStart = blockStart;
+            m_blocks[blockId].blockEnd = i;
+            blockId++;
+            blockStart = i;
+        }
+    }
 }
 
 } // namespace phys

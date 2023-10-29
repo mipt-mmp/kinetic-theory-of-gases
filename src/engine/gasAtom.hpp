@@ -13,6 +13,7 @@ public:
         , m_v(v)
         , m_mass(m)
         , m_radius(radius) {
+
         if (*m_mass == 0) {
             std::cerr << "Warning: too small mass: " << m_mass << "\n";
         }
@@ -67,6 +68,11 @@ public:
     Vector<Energy> getKineticDistributed() const {
         return MulByElement(m_v, m_v) * m_mass /= 2.l;
     }
+
+    uint64_t getBlockId() const;
+    void setBlockId(uint64_t blockId);
+
+    bool operator<(const GasAtom& other);
 
 private:
     // State characteristics
