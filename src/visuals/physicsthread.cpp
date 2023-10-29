@@ -45,7 +45,9 @@ int PhysicsThread::getPeriod() const {
     return m_period;
 }
 
-void PhysicsThread::setPeriod(int newPeriod) {
+void PhysicsThread::setPeriod(int newPeriod)
+{
+    m_period = newPeriod;
     QMutexLocker lock(&m_mutex);
     m_period = newPeriod;
 }

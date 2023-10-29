@@ -40,10 +40,9 @@ void Chamber::step() {
 void Chamber::getMetrics(Metrics& metrics) const {
     metrics.chamberCorner = m_chamberCorner;
     metrics.atoms = m_atoms;
-
     metrics.kineticEnergy = Energy{};
-
-    for (const auto& atom : m_atoms) {
+    metrics.time = m_time;
+    for(const auto& atom : m_atoms) {
         metrics.kineticEnergy += atom.getKineticDistributed();
     }
 
@@ -70,6 +69,8 @@ bool Chamber::hasCollision(size_t i, size_t j) const {
 void Chamber::handleCollision(size_t i, size_t j) {
     if (!hasCollision(i, j))
         return;
+    m_atoms[i].collide(m_time);
+    m_atoms[j].collide(m_time);
 
     Velocity v1 = m_atoms[i].getVelocity();
     Velocity v2 = m_atoms[j].getVelocity();

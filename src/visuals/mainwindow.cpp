@@ -68,9 +68,14 @@ void MainWindow::setSimulationSpeed(int x) {
 }
 
 void MainWindow::updateMetrics() {
+    if(ui->timerBox->value() == -1) {
+        return;
+    }
+
     m_physThread->acquireMetrics(m_chamberMetrics);
     m_cd->update();
 
+    ui->chooseAtom->setMaximum(m_chamberMetrics.atoms.size());
     QString str;
     QTextStream ss(&str);
 
@@ -97,6 +102,17 @@ void MainWindow::updateMetrics() {
         m_pDisplays[i]->setText(str);
         str.clear();
     }
-    //    ss << m_ud->getUniverseMetrics().energy;
-    //     ui->eDisplay->setText(str);
+
+    phys::Length freeFlight{};
+    for(size_t i = 0; i < m_chamberMetrics.atoms.size(); ++i) {
+        freeFlight += m_chamberMetrics.atoms[i].getFreeFlight(m_chamberMetrics.time);
+    }
+
+    ss << freeFlight;
+    ui->freeFlightDisplay->setText(str);
+    str.clear();
+
+    ss << m_chamberMetrics.atoms[ui->chooseAtom->value()].getAverageEnergy(m_chamberMetrics.time) * phys::num_t{2./3.} / phys::consts::k;
+    ui->avgEDisplay->setText(str);
+    str.clear();
 }
