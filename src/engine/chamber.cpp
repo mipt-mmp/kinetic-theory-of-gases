@@ -68,6 +68,8 @@ Chamber::Chamber(Position corner)
     m_threadPool.setMaxThreadCount(k_maxThreads + 1);
 }
 
+const size_t Chamber::k_maxThreads = std::thread::hardware_concurrency();
+
 void Chamber::fillRandom(size_t N, VelocityVal maxV, Mass m, Length r) {
     for (size_t i = 0; i < N; ++i) {
         Velocity v = randomSphere<Unit<num_t>>() * maxV;

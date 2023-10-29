@@ -93,7 +93,7 @@ private:
 
 private:
     static const size_t k_maxDimensions = 3;
-    static const size_t k_maxThreads = 8;
+    static const size_t k_maxThreads;
     static const size_t k_blocksPerDim = 64;
 
     std::vector<GasAtom> m_atoms;

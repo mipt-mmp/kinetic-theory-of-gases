@@ -9,15 +9,15 @@
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_chamber({1e-8_m, 1e-8_m, 1e-9_m})
+    , m_chamber({18e-8_m, 1e-7_m, 1e-7_m})
     , m_physThread(new PhysicsThread(m_chamber, this)) {
 
     m_cd = new ChamberDisplayer(m_chamberMetrics, this);
     m_cd->setGeometry(rect());
-    m_cd->setScale(1e-8_m);
+    m_cd->setScale(1e-7_m);
     //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
     //    31e-12_m);
-    m_chamber.fillRandomAxis(10000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    m_chamber.fillRandomAxis(10000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-11_m);
 
     m_timer = new QTimer(this);
     m_timer->setInterval(1000 / 60); // 60 fps
