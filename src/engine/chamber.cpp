@@ -19,7 +19,20 @@ void ChamberBlockRunner::setBlockId(uint64_t blockId) {
 
 void ChamberBlockRunner::run() {
     if (m_blockId == 0) {
-        m_chamber.step();
+        auto atomsNumber = m_chamber.m_atoms.size();
+        bool collisionsEnabled = m_chamber.m_enableCollision;
+
+        for (size_t i = 0; i < atomsNumber; ++i) {
+            m_chamber.handleWallCollision(i);
+        }
+    
+        if (collisionsEnabled) {
+            for (size_t i = 0; i < atomsNumber; ++i) {
+                for (size_t j = i + 1; j < atomsNumber; ++j) {
+                    m_chamber.handleCollision(i, j);
+                }
+            }
+        }
     }
 }
 
@@ -46,18 +59,6 @@ void Chamber::fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_
 void Chamber::step() {
     for (size_t i = 0; i < m_atoms.size(); ++i) {
         m_atoms[i].move(m_dt);
-    }
-
-    for (size_t i = 0; i < m_atoms.size(); ++i) {
-        handleWallCollision(i);
-    }
-
-    if (m_enableCollision) {
-        for (size_t i = 0; i < m_atoms.size(); ++i) {
-            for (size_t j = i + 1; j < m_atoms.size(); ++j) {
-                handleCollision(i, j);
-            }
-        }
     }
 
     m_time += m_dt;

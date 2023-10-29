@@ -19,6 +19,10 @@ void PhysicsThread::run() {
                 m_allow_run.wait(&m_mutex);
             }
 
+            // Move all the atoms && update their block IDs
+            m_chamber.step();
+
+            // Handle atoms collisions
             for (size_t i = 0; i < m_chamber.getBlocksNumber(); i++) {
                 auto blockRunner = new phys::ChamberBlockRunner(m_chamber, i);
                 QThreadPool::globalInstance()->start(blockRunner);
