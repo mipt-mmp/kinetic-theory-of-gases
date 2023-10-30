@@ -36,9 +36,12 @@ void Chamber::step() {
             }
         }
 #else 
-        m_atoms.handleCollisions([this] (size_t i, size_t j) {
+        m_atoms.handleCollisions();
+
+        const auto& lst = m_atoms.getCollisions();
+        for(auto [i, j] : lst) {
             handleCollision(i, j);
-        });
+        }
 #endif
     }
     m_time += m_dt;

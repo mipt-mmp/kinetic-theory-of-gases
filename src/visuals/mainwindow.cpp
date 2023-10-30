@@ -11,16 +11,16 @@ const constexpr phys::Time Step = 5e-14_sec;
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_chamber({5e-8_m, 5e-8_m, 1e-8_m})
+    , m_chamber({5e-7_m, 5e-7_m, 1e-7_m})
     // , m_chamber({5e-6_m, 5e-6_m})
     , m_physThread(new PhysicsThread(m_chamber, this)) {
 
     m_cd = new ChamberDisplayer(m_chamberMetrics, this);
     m_cd->setGeometry(rect());
-    m_cd->setScale(5e-8_m);
+    m_cd->setScale(5e-7_m);
     //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
     //    31e-12_m);
-    m_chamber.fillRandomAxis(500'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    m_chamber.fillRandomAxis(1'000'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
     // m_chamber.fillRandom(10'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
 
     m_timer = new QTimer(this);

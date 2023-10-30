@@ -113,6 +113,7 @@ class BallsCollection {
     std::array<uint32_t, UniverseDim> m_shifts;
 
     std::vector<std::pair<size_t, size_t>> m_collisionList;
+    QMutex m_listMutex;
 
 public:
     BallsCollection(Length meterScale, Time timeScale) : m_mScale(meterScale), m_tScale(timeScale) {}
@@ -161,15 +162,16 @@ public:
     }
 
     void handleWallCollisions();
-
-    using CollisionHandler = std::function<void(size_t, size_t)>;
-    void handleCollisions(const CollisionHandler& action);
+    
+    void handleCollisions();
 
     const std::vector<std::pair<size_t, size_t>>& getCollisions() { return m_collisionList; }
 private:
     void radixSort();
     
-    void handleBlock(size_t i, size_t j, const CollisionHandler& action);
+    void handleSub(size_t i, size_t j);
+
+    void handleBlock(size_t i, size_t j);
 };
 
 }
