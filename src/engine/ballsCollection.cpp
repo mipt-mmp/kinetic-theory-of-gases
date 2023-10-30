@@ -3,6 +3,8 @@
 #include <iostream>
 #include <QtConcurrent/QtConcurrent>
 #include <QMutexLocker>
+
+static const auto StepSize = 32;
 namespace phys {
 
 detail::GasAtomProxy::GasAtomProxy(BallsCollection& balls, size_t index) : m_balls(balls), m_index(index), m_atom(balls.getAtom(index)) {}
@@ -30,12 +32,15 @@ void BallsCollection::move(Time dt) {
 
     QFutureSynchronizer<void> synchronizer = {};
     for(size_t d = 0; d < UniverseDim; ++d) {
-        synchronizer.addFuture(QtConcurrent::map(m_coords[d].begin(), m_coords[d].end(), 
-        [this, d, time] (num_t& coord) {
-            size_t i = &coord - m_coords[d].data();
-
-            coord += m_velocities[d][i] * time;
-        }));
+        for(size_t start = 0; start < m_nAtoms; start += m_nAtoms / StepSize) {
+            synchronizer.addFuture(QtConcurrent::run( 
+                [this, d, time, start] () {
+                    for(size_t i = start; i < std::min(m_nAtoms, start + m_nAtoms / StepSize); ++i) {
+                        m_coords[d][i] += m_velocities[d][i] * time;
+                    }
+                }
+            ));
+        }
     }
     synchronizer.waitForFinished();
 }
@@ -44,20 +49,23 @@ void BallsCollection::handleWallCollisions() {
     QFutureSynchronizer<void> synchronizer = {};
 
     for (size_t j = 0; j < UniverseDim; ++j) {
-        synchronizer.addFuture(QtConcurrent::map(m_coords[j].begin(), m_coords[j].end(), 
-        [this, j] (unreal_t& value) {
-            size_t i = &value - m_coords[j].data();
-
-            if (value < m_radiuses[i]) {
-                value = (m_radiuses[i] * 2) - value;
-                m_velocities[j][i] = -m_velocities[j][i];
-                m_wallImpulse[2 * j] += m_masses[i] * m_velocities[j][i] * 2;
-            } else if (value + m_radiuses[i] > m_walls[j]) {
-                value = ((m_walls[j] - m_radiuses[i]) * 2) - value;
-                m_velocities[j][i] = -m_velocities[j][i];
-                m_wallImpulse[2 * j + 1] += m_masses[i] * m_velocities[j][i] * 2;
-            }
-        }));
+        for(size_t start = 0; start < m_nAtoms; start += m_nAtoms / StepSize) {
+            synchronizer.addFuture(QtConcurrent::run(
+                [this, start, j] () {
+                    for(size_t i = start; i < std::min(m_nAtoms, start + m_nAtoms / StepSize); ++i) {
+                        if (m_coords[j][i] < m_radiuses[i]) {
+                            m_coords[j][i] = (m_radiuses[i] * 2) - m_coords[j][i];
+                            m_velocities[j][i] = -m_velocities[j][i];
+                            m_wallImpulse[2 * j] += m_masses[i] * m_velocities[j][i] * 2;
+                        } else if (m_coords[j][i] + m_radiuses[i] > m_walls[j]) {
+                            m_coords[j][i] = ((m_walls[j] - m_radiuses[i]) * 2) - m_coords[j][i];
+                            m_velocities[j][i] = -m_velocities[j][i];
+                            m_wallImpulse[2 * j + 1] += m_masses[i] * m_velocities[j][i] * 2;
+                        }
+                    }
+                }
+            ));
+        }
     }
 
     synchronizer.waitForFinished();
@@ -93,21 +101,28 @@ void BallsCollection::setCellSize(Length l) {
 
 void BallsCollection::handleCollisions() {
 // Counting hashes;
-    auto indices_filling = QtConcurrent::map(m_indicies.begin(), m_indicies.end(), 
-    [this] (uint32_t& value) {
-        value = static_cast<uint32_t>(&value - m_indicies.data());
-    });
+    QFutureSynchronizer<void> syncher = {};
+    for (size_t start = 0; start < m_nAtoms; start += m_nAtoms / StepSize) {
+        syncher.addFuture(QtConcurrent::run(
+            [start, this] () {
+                for (size_t i = start; i < std::min(m_nAtoms, start + m_nAtoms / StepSize); i++) {
+                    m_indicies[i] = static_cast<uint32_t>(i);
+                }
+            }
+        ));
 
-    QtConcurrent::blockingMap(m_hashes.begin(), m_hashes.end(), 
-    [this] (uint32_t& value) {
-        size_t i = &value - m_hashes.data();
-
-        value = 0;
-        for(size_t j = 0; j < UniverseDim; ++j) {
-            value |= static_cast<uint32_t>(m_coords[j][i] / m_cellSize) << m_shifts[j];
-        }
-    });
-    indices_filling.waitForFinished();
+        syncher.addFuture(QtConcurrent::run(
+            [start, this] () {
+                for (size_t i = start; i < std::min(m_nAtoms, start + m_nAtoms / StepSize); i++) {
+                    m_hashes[i] = 0;
+                    for(size_t j = 0; j < UniverseDim; ++j) {
+                        m_hashes[i] |= static_cast<uint32_t>(m_coords[j][i] / m_cellSize) << m_shifts[j];
+                    }
+                }
+            }
+        ));
+    }
+    syncher.waitForFinished();
 
     radixSort();
 
@@ -117,8 +132,8 @@ void BallsCollection::handleCollisions() {
 
     QFutureSynchronizer<void> synchronizer = {};
 
-    for(size_t i = 0; i < m_nAtoms; i += m_nAtoms / 32) {
-        synchronizer.addFuture(QtConcurrent::run(&BallsCollection::handleSub, this, i, std::min(i + m_nAtoms / 32, m_nAtoms)));
+    for(size_t i = 0; i < m_nAtoms; i += m_nAtoms / StepSize) {
+        synchronizer.addFuture(QtConcurrent::run(&BallsCollection::handleSub, this, i, std::min(i + m_nAtoms / StepSize, m_nAtoms)));
     }
     /*
     size_t prev = 0;
