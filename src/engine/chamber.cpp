@@ -1,4 +1,5 @@
 #include "chamber.hpp"
+#include <QtConcurrent/QtConcurrent>
 
 namespace phys {
 
@@ -35,21 +36,9 @@ void Chamber::step() {
             }
         }
 #else 
-        m_atoms.countCollisions();
-        const auto& cls = m_atoms.getCollisions();
-
-        // std::vector<std::pair<size_t, size_t>> ccsl;
-        // for (size_t i = 0; i < m_atoms.size(); ++i) {
-        //     for (size_t j = i + 1; j < m_atoms.size(); ++j) {
-        //         if(hasCollision(i, j)){
-        //             ccsl.push_back({i, j});
-        //         }
-        //     }
-        // }
-        // assert(ccsl == cls);
-        for(auto [i, j] : cls) {
-            handleCollision(i, j);    
-        }
+        m_atoms.handleCollisions([this] (size_t i, size_t j) {
+            handleCollision(i, j);
+        });
 #endif
     }
     m_time += m_dt;
@@ -58,17 +47,15 @@ void Chamber::step() {
 void Chamber::getMetrics(Metrics& metrics) const {
     metrics.chamberCorner = m_chamberCorner;
 
+    metrics.kineticEnergy = Energy{};
     metrics.atoms.resize(m_atoms.size());
+
     for(size_t i = 0; i < m_atoms.size(); ++i) {
         metrics.atoms[i] = m_atoms.getAtom(i);
+        metrics.kineticEnergy += metrics.atoms[i].getKineticDistributed();
     }
-    metrics.kineticEnergy = Energy{};
+
     metrics.time = m_time;
-
-    for(const auto& atom : metrics.atoms) {
-        metrics.kineticEnergy += atom.getKineticDistributed();
-    }
-
     metrics.volume = Volume{1.};
 
     for (size_t i = 0; i < UniverseDim; ++i) {

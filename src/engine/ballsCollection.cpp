@@ -1,6 +1,7 @@
 #include "ballsCollection.hpp"
 #include <numeric>
 #include <iostream>
+#include <QtConcurrent/QtConcurrent>
 
 namespace phys {
 
@@ -26,27 +27,40 @@ GasAtom BallsCollection::getAtom(size_t i) const {
 
 void BallsCollection::move(Time dt) {
     num_t time = *(dt / m_tScale);
+
+    QFutureSynchronizer<void> synchronizer = {};
     for(size_t d = 0; d < UniverseDim; ++d) {
-        for(size_t i = 0; i < m_nAtoms; ++i) {
-            m_coords[d][i] += m_velocities[d][i] * time;
-        }
+        synchronizer.addFuture(QtConcurrent::map(m_coords[d].begin(), m_coords[d].end(), 
+        [this, d, time] (num_t& coord) {
+            size_t i = &coord - m_coords[d].data();
+
+            coord += m_velocities[d][i] * time;
+        }));
     }
+    synchronizer.waitForFinished();
 }
 
 void BallsCollection::handleWallCollisions() {
+    QFutureSynchronizer<void> synchronizer = {};
+
     for (size_t j = 0; j < UniverseDim; ++j) {
-        for(size_t i = 0; i < m_nAtoms; ++i) {
-            if (m_coords[j][i] < m_radiuses[i]) {
-                m_coords[j][i] = (m_radiuses[i] * 2) - m_coords[j][i];
+        synchronizer.addFuture(QtConcurrent::map(m_coords[j].begin(), m_coords[j].end(), 
+        [this, j] (unreal_t& value) {
+            size_t i = &value - m_coords[j].data();
+
+            if (value < m_radiuses[i]) {
+                value = (m_radiuses[i] * 2) - value;
                 m_velocities[j][i] = -m_velocities[j][i];
                 m_wallImpulse[2 * j] += m_masses[i] * m_velocities[j][i] * 2;
-            } else if (m_coords[j][i] + m_radiuses[i] > m_walls[j]) {
-                m_coords[j][i] = ((m_walls[j] - m_radiuses[i]) * 2) - m_coords[j][i];
+            } else if (value + m_radiuses[i] > m_walls[j]) {
+                value = ((m_walls[j] - m_radiuses[i]) * 2) - value;
                 m_velocities[j][i] = -m_velocities[j][i];
                 m_wallImpulse[2 * j + 1] += m_masses[i] * m_velocities[j][i] * 2;
             }
-        }
+        }));
     }
+
+    synchronizer.waitForFinished();
 }
 
 static uint32_t getShift(uint32_t x) {
@@ -77,15 +91,23 @@ void BallsCollection::setCellSize(Length l) {
 }
 
 
-void BallsCollection::countCollisions() {
+void BallsCollection::handleCollisions(const CollisionHandler& action) {
 // Counting hashes;
-    for(size_t i = 0; i < m_nAtoms; ++i) {
-        m_hashes[i] = 0;
+    auto indices_filling = QtConcurrent::map(m_indicies.begin(), m_indicies.end(), 
+    [this] (uint32_t& value) {
+        value = static_cast<uint32_t>(&value - m_indicies.data());
+    });
+
+    QtConcurrent::blockingMap(m_hashes.begin(), m_hashes.end(), 
+    [this] (uint32_t& value) {
+        size_t i = &value - m_hashes.data();
+
+        value = 0;
         for(size_t j = 0; j < UniverseDim; ++j) {
-            m_hashes[i] |= static_cast<uint32_t>(m_coords[j][i] / m_cellSize) << m_shifts[j];
+            value |= static_cast<uint32_t>(m_coords[j][i] / m_cellSize) << m_shifts[j];
         }
-    }
-    std::iota(m_indicies.begin(), m_indicies.end(), 0);
+    });
+    indices_filling.waitForFinished();
 
     radixSort();
 
@@ -93,14 +115,17 @@ void BallsCollection::countCollisions() {
     
     m_collisionList.clear();
 
+    QFutureSynchronizer<void> synchronizer = {};
+
     size_t prev = 0;
     for(size_t i = 1; i < m_nAtoms; ++i) {
-        if(m_hashes[i] != m_hashes[prev]) {
-            handleBlock(prev, i);
+        if ((m_hashes[i] != m_hashes[prev]) && ((i - prev) > 1)) {
+            synchronizer.addFuture(QtConcurrent::run(&BallsCollection::handleBlock, this, prev, i, action));
             prev = i;
         }
     }
-    handleBlock(prev, m_nAtoms);
+    synchronizer.addFuture(QtConcurrent::run(&BallsCollection::handleBlock, this, prev, m_nAtoms, action));
+    synchronizer.waitForFinished();
 }
 
 void BallsCollection::radixSort() {
@@ -128,7 +153,9 @@ void BallsCollection::radixSort() {
     }
 }
 
-void BallsCollection::handleBlock(size_t l, size_t r) {
+void BallsCollection::handleBlock(size_t l, size_t r, const CollisionHandler& action) {
+    std::vector<std::pair<size_t, size_t>> collisionList = {};
+
     for(size_t idx = l; idx < r; ++idx) {
         for(size_t jdx = idx + 1; jdx < r; ++jdx) {
             size_t i = m_indicies[idx];
@@ -138,9 +165,13 @@ void BallsCollection::handleBlock(size_t l, size_t r) {
                 dst += (m_coords[d][i] - m_coords[d][j]) * (m_coords[d][i] - m_coords[d][j]);
             }
             if(dst < (m_radiuses[i] + m_radiuses[j]) * (m_radiuses[i] + m_radiuses[j])) {
-                m_collisionList.push_back({i, j});
+                collisionList.push_back(std::make_pair(i, j));
             }
         }
+    }
+
+    for (auto& p : collisionList) {
+        action(p.first, p.second);
     }
 }
 

@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 
 add_library(phys STATIC 
 chamber.cpp
@@ -6,3 +7,4 @@ real.hpp
 )
 
 target_include_directories(phys INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(phys PRIVATE Qt6::Concurrent)

@@ -3,6 +3,9 @@
 #include "gasAtom.hpp"
 #include "units.hpp"
 
+#include <functional>
+#include <QMutex>
+
 namespace phys {
 
 class BallsCollection;
@@ -159,13 +162,14 @@ public:
 
     void handleWallCollisions();
 
-    void countCollisions();
+    using CollisionHandler = std::function<void(size_t, size_t)>;
+    void handleCollisions(const CollisionHandler& action);
 
     const std::vector<std::pair<size_t, size_t>>& getCollisions() { return m_collisionList; }
 private:
     void radixSort();
     
-    void handleBlock(size_t i, size_t j);
+    void handleBlock(size_t i, size_t j, const CollisionHandler& action);
 };
 
 }
