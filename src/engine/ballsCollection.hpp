@@ -151,6 +151,8 @@ public:
 
     detail::GasAtomProxy operator[](size_t i) {return detail::GasAtomProxy(*this, i);}
 
+    void deleteAtom(size_t i);
+
     GasAtom getAtom(size_t i) const;
 
     void move(Time dt);

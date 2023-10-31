@@ -4,8 +4,10 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QMutexLocker>
 
-static const auto StepSize = 32;
+static const auto StepSize = 16;
 namespace phys {
+
+static const num_t holeSize = 0.1;
 
 detail::GasAtomProxy::GasAtomProxy(BallsCollection& balls, size_t index) : m_balls(balls), m_index(index), m_atom(balls.getAtom(index)) {}
 
@@ -14,6 +16,24 @@ void detail::GasAtomProxy::updateBalls() {
         m_balls.m_coords    [i][m_index] = *(m_atom.getPos()     [i] / m_balls.m_mScale);
         m_balls.m_velocities[i][m_index] = *(m_atom.getVelocity()[i] / m_balls.m_mScale * m_balls.m_tScale);
     }
+}
+
+void BallsCollection::deleteAtom(size_t i) {
+    --m_nAtoms;
+
+    for(size_t j = 0; j < UniverseDim; ++j) {
+        std::swap(m_coords[j][i], m_coords[j][m_nAtoms]);
+        m_coords[j].pop_back();
+
+        std::swap(m_velocities[j][i], m_velocities[j][m_nAtoms]);
+        m_velocities[j].pop_back();
+    }
+
+    std::swap(m_masses[i], m_masses[m_nAtoms]);
+    m_masses.pop_back();
+
+    std::swap(m_radiuses[i], m_radiuses[m_nAtoms]);
+    m_radiuses.pop_back();
 }
 
 GasAtom BallsCollection::getAtom(size_t i) const {
@@ -46,14 +66,34 @@ void BallsCollection::move(Time dt) {
 }
 
 void BallsCollection::handleWallCollisions() {
+    QMutex deleteProtector = {};
+    std::vector<size_t> deleteCandidates = {};
+
+    auto isInHole = [this] (size_t atomIdx) {
+        bool flag = true;
+        
+        for (size_t holeDim = 1; holeDim < UniverseDim; holeDim++) {
+            if ((std::abs(m_coords[holeDim][atomIdx] - (m_walls[holeDim] / 2)) / m_walls[holeDim]) > holeSize) {
+                flag = false;
+            }
+        }
+
+        return flag;
+    };
+    
     QFutureSynchronizer<void> synchronizer = {};
 
     for (size_t j = 0; j < UniverseDim; ++j) {
         for(size_t start = 0; start < m_nAtoms; start += m_nAtoms / StepSize) {
             synchronizer.addFuture(QtConcurrent::run(
-                [this, start, j] () {
+                [this, start, j, isInHole, &deleteProtector, &deleteCandidates] () {
                     for(size_t i = start; i < std::min(m_nAtoms, start + m_nAtoms / StepSize); ++i) {
                         if (m_coords[j][i] < m_radiuses[i]) {
+                            if ((j == 0) && isInHole(i)) {
+                                std::lock_guard guard{deleteProtector};
+                                deleteCandidates.push_back(i);
+                            }
+
                             m_coords[j][i] = (m_radiuses[i] * 2) - m_coords[j][i];
                             m_velocities[j][i] = -m_velocities[j][i];
                             m_wallImpulse[2 * j] += m_masses[i] * m_velocities[j][i] * 2;
@@ -69,6 +109,10 @@ void BallsCollection::handleWallCollisions() {
     }
 
     synchronizer.waitForFinished();
+
+    for (auto& candidateIdx : deleteCandidates) {
+        deleteAtom(candidateIdx);
+    }
 }
 
 static uint32_t getShift(uint32_t x) {

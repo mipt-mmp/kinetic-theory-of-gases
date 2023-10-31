@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_cd->setScale(5e-7_m);
     //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
     //    31e-12_m);
-    m_chamber.fillRandomAxis(650'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    m_chamber.fillRandomAxis(100'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
     // m_chamber.fillRandom(10'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
 
     m_timer = new QTimer(this);
