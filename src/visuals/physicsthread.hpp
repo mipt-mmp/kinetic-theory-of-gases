@@ -4,6 +4,7 @@
 #include <QMutex>
 #include <QThread>
 #include <QWaitCondition>
+#include <QAtomicInt>
 
 #include "chamber.hpp"
 
@@ -16,9 +17,7 @@ public:
 public slots:
 
     void stop() {
-        m_mutex.lock();
         m_stopped = true;
-        m_mutex.unlock();
         emit toggled(false);
     }
 
@@ -68,8 +67,8 @@ private:
     phys::Chamber& m_chamber;
     QMutex m_mutex;
     QWaitCondition m_allow_run;
-    bool m_stopped = true;
-    int m_period = 32;
+    QAtomicInt m_stopped = true;
+    QAtomicInt m_period = 32;
 };
 
 #endif // PHYSICSTHREAD_HPP
