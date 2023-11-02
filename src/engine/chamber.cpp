@@ -19,12 +19,13 @@ void Chamber::fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_
     }
 }
 
+void Chamber::updateCellSize()
+{
+    m_atoms.setCellSize(m_chamberCorner.X() / std::pow(m_atoms.size(), 1.0 / UniverseDim));
+}
+
 void Chamber::step() {
     m_atoms.move(m_dt);
-
-    // for (size_t i = 0; i < m_atoms.size(); ++i) {
-    //     handleWallCollision(i);
-    // }
 
     m_atoms.handleWallCollisions();
 
@@ -66,11 +67,17 @@ void Chamber::getMetrics(Metrics& metrics) const {
     }
 
     for (size_t i = 0; i < 2 * UniverseDim; ++i) {
-        metrics.pressure[i] = m_atoms.getWallImpulse(i) / (m_time - m_impulseMeasureStart) /
+        metrics.pressure[i] = m_atoms.getWallImpulse(i) / (m_dt * num_t{m_atoms.MeasurementSize * m_atoms.MeasurementSize}) /
                               (metrics.volume / m_chamberCorner[i / 2]);
         if (metrics.pressure[i] < Pressure{0.})
             metrics.pressure[i] *= -1.;
     }
+}
+
+void Chamber::setXLength(Length len)
+{
+    m_chamberCorner[0] = len;
+    m_atoms.setWalls(m_chamberCorner);
 }
 
 bool Chamber::hasCollision(size_t i, size_t j) {

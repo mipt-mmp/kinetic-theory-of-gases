@@ -66,10 +66,16 @@ void BallsCollection::move(Time dt) {
 }
 
 void BallsCollection::handleWallCollisions() {
+
+    for(size_t i = 0; i < 2*UniverseDim; ++i)
+        m_wallImpulse[(m_stepIdx / MeasurementSize) & (MeasurementSize - 1)][i] = 0;
+
     QMutex deleteProtector = {};
     std::vector<size_t> deleteCandidates = {};
 
     auto isInHole = [this] (size_t atomIdx) {
+        if(!m_enableHole)
+            return false;
         bool flag = true;
         
         for (size_t holeDim = 1; holeDim < UniverseDim; holeDim++) {
@@ -96,11 +102,11 @@ void BallsCollection::handleWallCollisions() {
 
                             m_coords[j][i] = (m_radiuses[i] * 2) - m_coords[j][i];
                             m_velocities[j][i] = -m_velocities[j][i];
-                            m_wallImpulse[2 * j] += m_masses[i] * m_velocities[j][i] * 2;
+                            m_wallImpulse[(m_stepIdx / MeasurementSize) & (MeasurementSize-1)][2 * j] += m_masses[i] * m_velocities[j][i] * 2;
                         } else if (m_coords[j][i] + m_radiuses[i] > m_walls[j]) {
                             m_coords[j][i] = ((m_walls[j] - m_radiuses[i]) * 2) - m_coords[j][i];
                             m_velocities[j][i] = -m_velocities[j][i];
-                            m_wallImpulse[2 * j + 1] += m_masses[i] * m_velocities[j][i] * 2;
+                            m_wallImpulse[(m_stepIdx / MeasurementSize) & (MeasurementSize-1)][2 * j + 1] += m_masses[i] * m_velocities[j][i] * 2;
                         }
                     }
                 }
@@ -113,6 +119,7 @@ void BallsCollection::handleWallCollisions() {
     for (auto& candidateIdx : deleteCandidates) {
         deleteAtom(candidateIdx);
     }
+    m_stepIdx++;
 }
 
 static uint32_t getShift(uint32_t x) {
@@ -124,21 +131,26 @@ static uint32_t getShift(uint32_t x) {
     }
 
     return shift;
-} 
+}
+
+void BallsCollection::setEnableHole(bool newEnableHole)
+{
+    m_enableHole = newEnableHole;
+}
 
 void BallsCollection::setCellSize(Length l) {
     num_t len = *(l / m_mScale);
     m_cellSize = len;
 
     m_shifts[0] = 0;
-    std::cout << "Grid dim: ";
+    std::cerr << "Grid dim: ";
     for(size_t i = 1; i < UniverseDim; ++i) {
         uint32_t nCells = std::ceil((m_walls[i-1] / len).getVal());
-        std::cout << nCells << '*';
+        std::cerr << nCells << '*';
         m_shifts[i] =  m_shifts[i-1] + getShift(nCells);
     }
     uint32_t nCells = std::ceil((m_walls[UniverseDim-1] / len).getVal());
-    std::cout << nCells << '\n';
+    std::cerr << nCells << '\n';
     assert(m_shifts.back() + getShift(nCells) < 32);
 }
 
@@ -179,15 +191,6 @@ void BallsCollection::handleCollisions() {
     for(size_t i = 0; i < m_nAtoms; i += m_nAtoms / StepSize) {
         synchronizer.addFuture(QtConcurrent::run(&BallsCollection::handleSub, this, i, std::min(i + m_nAtoms / StepSize, m_nAtoms)));
     }
-    /*
-    size_t prev = 0;
-    for(size_t i = 1; i < m_nAtoms; ++i) {
-        if ((m_hashes[i] != m_hashes[prev]) && ((i - prev) > 1)) {
-            prev = i;
-        }
-    }
-    synchronizer.addFuture(QtConcurrent::run(&BallsCollection::handleBlock, this, prev, m_nAtoms, action));
-    */
     synchronizer.waitForFinished();
 }
 

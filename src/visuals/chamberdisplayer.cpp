@@ -22,6 +22,18 @@ ChamberDisplayer::ChamberDisplayer(phys::Chamber::Metrics& metrics, QWidget* par
 
 ChamberDisplayer::~ChamberDisplayer() {}
 
+void ChamberDisplayer::setFollowIdx(int newFollowIdx)
+{
+    m_followIdx = newFollowIdx;
+    m_recordIdx = 0;
+    m_record.fill(std::make_pair(QPoint{}, QColor("transparent")));
+}
+
+void ChamberDisplayer::setFollow(bool newFollow)
+{
+    m_follow = newFollow;
+}
+
 void ChamberDisplayer::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     rescale();
@@ -62,9 +74,29 @@ void ChamberDisplayer::paintEvent(QPaintEvent* /*event*/) {
 
         int radius = static_cast<int>(pixscale * *(atom.getRadius() / m_scale));
         radius = std::max(1, radius);
-        painter.drawEllipse(static_cast<int>(pixscale * *((atom.getPos().X()) / m_scale)) - radius,
-                            static_cast<int>(pixscale * *((atom.getPos().Y()) / m_scale)) - radius,
-                            2 * radius, 2 * radius);
+        QPoint pt{static_cast<int>(pixscale * *((atom.getPos().X()) / m_scale)) - radius,
+                  static_cast<int>(pixscale * *((atom.getPos().Y()) / m_scale)) - radius};
+        painter.drawEllipse(pt.x(), pt.y(), 2 * radius, 2 * radius);
+        if(i == m_followIdx) {
+            m_record[m_recordIdx++ % m_record.size()] = {pt, color};
+        }
+    }
+    if(m_follow) {       
+        for(size_t j = 1; j < m_record.size(); ++j) {
+            QColor color = m_record[(m_recordIdx + j) % m_record.size()].second;
+            QColor colorNext = m_record[(m_recordIdx + j + 1) % m_record.size()].second;
+            if(colorNext == QColor("transparent"))
+                continue;
+            brush.setColor(color);
+            pen.setColor(color);
+            painter.setPen(pen);
+            painter.setBrush(brush);
+
+            QPoint p1 = m_record[(m_recordIdx + j) % m_record.size()].first;
+            QPoint p2 = m_record[(m_recordIdx + j + 1) % m_record.size()].first;
+
+            painter.drawLine(p1, p2);
+        }
     }
 }
 
@@ -73,8 +105,9 @@ QColor ChamberDisplayer::getColor(const phys::GasAtom& atom) const {
 
     case ColorPolicy::SingleColor:
         return Qt::gray;
+    
     case ColorPolicy::HeatColor: {
-        int hue = std::min(200, static_cast<int>(*atom.getKinetic() * 5e23));
+        int hue = std::min(200, static_cast<int>(*atom.getKinetic() * 0.2e23));
         return QColor::fromHsv(200 - hue, 250, 250);
     }
     }

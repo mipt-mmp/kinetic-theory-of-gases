@@ -6,22 +6,27 @@
 #include <QDebug>
 #include <QTimer>
 
-const constexpr phys::Time Step = 5e-14_sec; 
+const constexpr phys::Time Step = 5e-14_sec;
+const constexpr phys::Length XSize = 5e-7_m;
+const constexpr phys::Length YSize = 5e-7_m;
+const constexpr phys::Length ZSize = 1e-7_m;
+
+
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_chamber({5e-7_m, 5e-7_m, 1e-7_m})
+    , m_chamber({XSize, YSize, ZSize})
     // , m_chamber({5e-6_m, 5e-6_m})
     , m_physThread(new PhysicsThread(m_chamber, this)) {
 
     m_cd = new ChamberDisplayer(m_chamberMetrics, this);
     m_cd->setGeometry(rect());
-    m_cd->setScale(5e-7_m);
+    m_cd->setScale(XSize);
     //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
     //    31e-12_m);
-    m_chamber.fillRandomAxis(100'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
-    // m_chamber.fillRandom(10'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+//    m_chamber.fillRandomAxis(10'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+     m_chamber.fillRandom(100'000, 4e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
 
     m_timer = new QTimer(this);
     m_timer->setInterval(1000 / 60); // 60 fps
@@ -38,6 +43,10 @@ MainWindow::MainWindow(QWidget* parent)
 
     connect(ui->startButton, SIGNAL(toggled(bool)), this, SLOT(toggleSimulation(bool)));
     connect(ui->timerBox, SIGNAL(valueChanged(int)), this, SLOT(setSimulationSpeed(int)));
+    connect(ui->volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(setXLength(int)));
+    connect(ui->holeBox, SIGNAL(toggled(bool)), this, SLOT(openHole(bool)));
+    connect(ui->followBox, SIGNAL(toggled(bool)), m_cd, SLOT(setFollow(bool)));
+    connect(ui->chooseAtom, SIGNAL(valueChanged(int)), m_cd, SLOT(setFollowIdx(int)));
 
     m_eDisplays[0] = ui->eDisplay1;
     m_eDisplays[1] = ui->eDisplay2;
@@ -127,4 +136,14 @@ void MainWindow::updateMetrics() {
 
     double ticks = static_cast<double>(*(m_chamberMetrics.time / Step));
     ui->tps->setValue(1000 * ticks / m_elapsed.elapsed());
+}
+
+void MainWindow::setXLength(int scale)
+{
+    m_chamber.setXLength(XSize * phys::num_t{static_cast<double>(scale) / ui->volumeSlider->maximum()});
+}
+
+void MainWindow::openHole(bool open)
+{
+    m_chamber.openHole(open);
 }

@@ -99,9 +99,12 @@ class BallsCollection {
     Time   m_tScale;
 
     std::array<num_t, UniverseDim> m_walls;
+public:
+    static const std::size_t MeasurementSize = 64;
+private:
+    std::array<std::array<num_t, 2 * UniverseDim>, MeasurementSize> m_wallImpulse;
+    std::size_t m_stepIdx = 0;
 
-    std::array<num_t, 2 * UniverseDim> m_wallImpulse;
-    
     std::vector<uint32_t> m_hashes;
     std::vector<uint32_t> m_indicies;
     std::vector<uint32_t> m_radixBuffer;
@@ -115,11 +118,17 @@ class BallsCollection {
     std::vector<std::pair<size_t, size_t>> m_collisionList;
     QMutex m_listMutex;
 
+    bool m_enableHole = false;
+
 public:
     BallsCollection(Length meterScale, Time timeScale) : m_mScale(meterScale), m_tScale(timeScale) {}
 
     ImpulseVal getWallImpulse(size_t i) const {
-        return std::abs(m_wallImpulse[i]) * m_mScale / m_tScale * Mass{1};
+        num_t val;
+        for(size_t t = 0; t < MeasurementSize;t++) {
+            val += m_wallImpulse[t][i];
+        }
+        return std::abs(val) * m_mScale / m_tScale * Mass{1};
     }
 
     template<typename F>
@@ -168,6 +177,8 @@ public:
     void handleCollisions();
 
     const std::vector<std::pair<size_t, size_t>>& getCollisions() { return m_collisionList; }
+    void setEnableHole(bool newEnableHole);
+
 private:
     void radixSort();
     

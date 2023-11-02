@@ -7,6 +7,7 @@
 namespace phys {
 
 const Time defaultDeltaTime = 1e4_sec;
+const size_t AtomsPerCell = 10;
 
 class Chamber {
     Position m_chamberCorner;
@@ -46,7 +47,7 @@ public:
     };
 
 public:
-    Chamber(Position corner)
+    Chamber(Position corner = {})
         : m_chamberCorner(corner), m_atoms(std::max(corner.X(), corner.Y()), 1_sec) {
             m_atoms.setWalls(corner);
             m_atoms.setCellSize(1e-9_m);
@@ -56,12 +57,25 @@ public:
 
     void fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_t axis = 0);
 
+    void updateCellSize();
+
+    void setWalls(Position pos) {
+            m_chamberCorner = pos;
+            m_atoms.setWalls(pos);
+    }
+
     void step();
 
     void getMetrics(Metrics& metrics) const;
 
     void setDT(Time dt) {
         m_dt = dt;
+    }
+
+    void setXLength(Length len);
+
+    void openHole(bool open) {
+        m_atoms.setEnableHole(open);
     }
 
 private:

@@ -46,6 +46,10 @@ private slots:
     void setSimulationSpeed(int);
 
     void updateMetrics();
+
+    void setXLength(int);
+
+    void openHole(bool);
 };
 
 #endif // MAINWINDOW_H
