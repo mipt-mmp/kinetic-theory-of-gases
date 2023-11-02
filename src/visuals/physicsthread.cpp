@@ -14,7 +14,6 @@ void PhysicsThread::run() {
     forever {
         {
             QMutexLocker lock(&m_mutex);
-
             if (m_stopped) {
                 m_allow_run.wait(&m_mutex);
             }
@@ -29,8 +28,9 @@ void PhysicsThread::run() {
                 time = 5'000'000l;
             usleep(time);
         } else {
-            for (size_t i = 0; i < 100'000; ++i) {
-                __asm__ volatile("nop");
+            QMutexLocker lock(&m_mutex);
+            while(m_period.loadRelaxed() == -1) {
+                m_chamber.step();
             }
         }
     }
@@ -47,7 +47,5 @@ int PhysicsThread::getPeriod() const {
 
 void PhysicsThread::setPeriod(int newPeriod)
 {
-    m_period = newPeriod;
-    QMutexLocker lock(&m_mutex);
-    m_period = newPeriod;
+    m_period.storeRelaxed(newPeriod);
 }

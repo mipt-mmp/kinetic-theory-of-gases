@@ -21,16 +21,26 @@ public:
     }
 
     enum class ColorPolicy {
-        SingleColor,
-        HeatColor,
+        SingleColor = 0,
+        HeatColor = 1,
+        MassColor = 2,
     };
 
     ColorPolicy m_colorPolicy = ColorPolicy::HeatColor;
 
+
+    void setColorPolicy(ColorPolicy newColorPolicy);
+
 private:
+    std::array<std::pair<QPoint, QColor>, 1024> m_record;
+    std::size_t m_recordIdx = 0;
+    std::size_t m_followIdx = 0;
+
     phys::Chamber::Metrics& m_chamberMetrics;
     phys::LengthVal m_scale;
     QTimer* m_timer;
+
+    bool m_follow = false;
 
     void resizeEvent(QResizeEvent* event) override;
 
@@ -40,6 +50,10 @@ private:
 
 public slots:
     void paintEvent(QPaintEvent* event) override;
+
+    void setFollowIdx(int newFollowIdx);
+
+    void setFollow(bool newFollow);
 };
 
 #endif // UNIVERSEDISPLAYER_HPP

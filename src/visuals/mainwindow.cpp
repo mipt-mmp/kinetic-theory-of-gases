@@ -6,18 +6,54 @@
 #include <QDebug>
 #include <QTimer>
 
+const constexpr phys::Time Step = 5e-14_sec;
+const constexpr phys::Length XSize = 5e-7_m;
+const constexpr phys::Length YSize = 5e-7_m;
+const constexpr phys::Length ZSize = 1e-7_m;
+
+#define PRESET 1
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_chamber({1e-8_m, 1e-8_m, 1e-9_m})
+#if PHYS_UNIVERSE_DIM == 3
+    , m_chamber({XSize, YSize, ZSize})
+#else
+    , m_chamber({XSize, YSize})
+#endif
     , m_physThread(new PhysicsThread(m_chamber, this)) {
 
     m_cd = new ChamberDisplayer(m_chamberMetrics, this);
     m_cd->setGeometry(rect());
-    m_cd->setScale(1e-8_m);
+    m_cd->setScale(XSize);
     //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
     //    31e-12_m);
-    m_chamber.fillRandomAxis(1000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+
+#if PRESET == 0
+    m_chamber.fillRandomAxis(100'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+
+#elif PRESET == 1
+    m_chamber.fillRandom(100'000, 4e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+
+#elif PRESET == 2
+
+#if PHYS_UNIVERSE_DIM == 3
+    phys::num_t downscale = 0.05;
+    m_chamber.setWalls({XSize * downscale, YSize * downscale, ZSize * downscale});
+#else
+    phys::num_t downscale = 1.;
+    m_chamber.setWalls({XSize * downscale, YSize * downscale});
+#endif
+    m_cd->setScale(XSize * downscale);
+
+    m_chamber.fillRandomHalf(2'500, 5e3_m / 1_sec, phys::num_t{4}   * phys::consts::Dalton, 31e-12_m, 0);
+    m_chamber.fillRandomHalf(2'500, 3e2_m / 1_sec, phys::num_t{131} * phys::consts::Dalton, 108e-12_m, 1);
+
+    m_chamber.fillRandomHalf(50'000, 5e3_m / 1_sec, phys::num_t{4}   * phys::consts::Dalton, 31e-12_m, 0);
+    m_chamber.fillRandomHalf(50'000, 3e2_m / 1_sec, phys::num_t{131} * phys::consts::Dalton, 108e-12_m, 1);
+// 180 kPa 1.1 MPa
+    m_cd->setColorPolicy(ChamberDisplayer::ColorPolicy::MassColor);
+#endif
 
     m_timer = new QTimer(this);
     m_timer->setInterval(1000 / 60); // 60 fps
@@ -25,13 +61,24 @@ MainWindow::MainWindow(QWidget* parent)
     connect(m_timer, SIGNAL(timeout()), this, SLOT(updateMetrics()));
     m_timer->start();
 
-    m_chamber.setDT(1e-14_sec);
+    m_elapsed.start();
+
+    m_chamber.setDT(Step);
     m_physThread->setPeriod(0);
 
     ui->setupUi(this);
 
+    #if PRESET == 2
+        ui->colorSelector->setCurrentIndex(2);
+    #endif
+
     connect(ui->startButton, SIGNAL(toggled(bool)), this, SLOT(toggleSimulation(bool)));
     connect(ui->timerBox, SIGNAL(valueChanged(int)), this, SLOT(setSimulationSpeed(int)));
+    connect(ui->volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(setXLength(int)));
+    connect(ui->holeBox, SIGNAL(toggled(bool)), this, SLOT(openHole(bool)));
+    connect(ui->followBox, SIGNAL(toggled(bool)), m_cd, SLOT(setFollow(bool)));
+    connect(ui->chooseAtom, SIGNAL(valueChanged(int)), m_cd, SLOT(setFollowIdx(int)));
+    connect(ui->colorSelector, SIGNAL(currentIndexChanged(int)), this, SLOT(setColoring(int)));
 
     m_eDisplays[0] = ui->eDisplay1;
     m_eDisplays[1] = ui->eDisplay2;
@@ -57,8 +104,10 @@ void MainWindow::resizeEvent(QResizeEvent* event) {
 }
 
 void MainWindow::toggleSimulation(bool run) {
-    if (run)
+    if (run) {
         m_physThread->cont();
+        m_elapsed.start();
+    }
     else
         m_physThread->stop();
 }
@@ -115,4 +164,27 @@ void MainWindow::updateMetrics() {
     ss << m_chamberMetrics.atoms[ui->chooseAtom->value()].getAverageEnergy(m_chamberMetrics.time) * phys::num_t{2./3.} / phys::consts::k;
     ui->avgEDisplay->setText(str);
     str.clear();
+
+
+    double ticks = static_cast<double>(*(m_chamberMetrics.time / Step));
+    ui->tps->setValue(1000 * ticks / m_elapsed.elapsed());
+}
+
+void MainWindow::setXLength(int scale)
+{
+    #if PRESET == 2 //FIXME: CLUTCH
+    m_chamber.setXLength(XSize * phys::num_t{0.05} * phys::num_t{static_cast<double>(scale) / ui->volumeSlider->maximum()});
+    #else
+    m_chamber.setXLength(XSize * phys::num_t{static_cast<double>(scale) / ui->volumeSlider->maximum()});
+    #endif
+}
+
+void MainWindow::openHole(bool open)
+{
+    m_chamber.openHole(open);
+}
+
+void MainWindow::setColoring(int x)
+{
+    m_cd->setColorPolicy(static_cast<ChamberDisplayer::ColorPolicy>(x));
 }

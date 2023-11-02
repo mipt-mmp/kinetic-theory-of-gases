@@ -17,6 +17,8 @@ class GasAtom {
     decltype(Energy{} * Time{}) m_sumE;
     Time m_lastCollide;
 public:
+    GasAtom() = default;
+
     GasAtom(const Position& pos, const Velocity& v, const Mass& m, const Length radius)
         : m_pos(pos)
         , m_v(v)

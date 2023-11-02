@@ -7,10 +7,10 @@
 #include <cstdint>
 
 #define PHYS_UNITS_PROVIDE_LITERALS // FIXME: Compile option
-
+#define PHYS_UNIVERSE_DIM 3
 namespace phys {
 
-const std::size_t UniverseDim = 3;
+const std::size_t UniverseDim = PHYS_UNIVERSE_DIM;
 
 namespace detail {
 class UnitBase {}; // Needed for fast abstraction
@@ -87,12 +87,32 @@ public:
         return num_ <=> rhs.num_;
     }
 
-    constexpr bool operator==(const Unit& rhs) const = default;
-    constexpr bool operator!=(const Unit& rhs) const = default;
-    constexpr bool operator<=(const Unit& rhs) const = default;
-    constexpr bool operator>=(const Unit& rhs) const = default;
-    constexpr bool operator<(const Unit& rhs) const = default;
-    constexpr bool operator>(const Unit& rhs) const = default;
+    constexpr bool operator==(const Unit& rhs) const {
+        return *this <=> rhs == std::partial_ordering::equivalent;
+    }
+
+    constexpr bool operator!=(const Unit& rhs) const {
+        return *this <=> rhs != std::partial_ordering::equivalent;
+    }
+
+    constexpr bool operator<=(const Unit& rhs) const {
+        auto cmp = *this <=> rhs;
+        return cmp == std::partial_ordering::equivalent || cmp == std::partial_ordering::less;
+    }
+
+    constexpr bool operator>=(const Unit& rhs) const {
+        auto cmp = *this <=> rhs;
+        return cmp == std::partial_ordering::equivalent || cmp == std::partial_ordering::greater;
+    }
+
+    constexpr bool operator<(const Unit& rhs) const {
+        return *this <=> rhs == std::partial_ordering::less;
+    }
+
+    constexpr bool operator>(const Unit& rhs) const {
+        return *this <=> rhs == std::partial_ordering::greater;
+
+    }
 };
 
 template <typename Num, int Meter1, int Sec1, int KG1, int K1, int Mole1, int Ampere1, int Candela1,
