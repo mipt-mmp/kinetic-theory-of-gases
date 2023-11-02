@@ -21,9 +21,9 @@ public:
     }
 
     enum class ColorPolicy {
-        SingleColor,
-        HeatColor,
-        MassColor,
+        SingleColor = 0,
+        HeatColor = 1,
+        MassColor = 2,
     };
 
     ColorPolicy m_colorPolicy = ColorPolicy::HeatColor;

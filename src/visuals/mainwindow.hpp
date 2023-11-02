@@ -50,6 +50,8 @@ private slots:
     void setXLength(int);
 
     void openHole(bool);
+
+    void setColoring(int);
 };
 
 #endif // MAINWINDOW_H

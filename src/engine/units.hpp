@@ -7,10 +7,10 @@
 #include <cstdint>
 
 #define PHYS_UNITS_PROVIDE_LITERALS // FIXME: Compile option
-
+#define PHYS_UNIVERSE_DIM 3
 namespace phys {
 
-const std::size_t UniverseDim = 3;
+const std::size_t UniverseDim = PHYS_UNIVERSE_DIM;
 
 namespace detail {
 class UnitBase {}; // Needed for fast abstraction

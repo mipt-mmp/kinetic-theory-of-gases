@@ -196,6 +196,9 @@
     </property>
    </widget>
    <widget class="QLineEdit" name="freeFlightDisplay">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -306,6 +309,34 @@
     <property name="text">
      <string>Follow</string>
     </property>
+   </widget>
+   <widget class="QComboBox" name="colorSelector">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>150</y>
+      <width>91</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>1</number>
+    </property>
+    <item>
+     <property name="text">
+      <string>StaticColor</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>HeatColor</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>MassColor</string>
+     </property>
+    </item>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
