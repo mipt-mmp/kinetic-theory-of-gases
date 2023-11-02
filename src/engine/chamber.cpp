@@ -7,7 +7,23 @@ void Chamber::fillRandom(size_t N, VelocityVal maxV, Mass m, Length r) {
     for (size_t i = 0; i < N; ++i) {
         Velocity v = randomSphere<Unit<num_t>>() * maxV;
         v *= randomShift();
-        m_atoms.push_back(GasAtom{randomInCube(m_chamberCorner) *= 0.8, v, m, r});
+        m_atoms.push_back(GasAtom{randomInCube(m_chamberCorner) *= 0.9, v, m, r});
+    }
+}
+
+void Chamber::fillRandomHalf(size_t N, VelocityVal maxV, Mass m, Length r, int half) {
+    Position pos = m_chamberCorner;
+    pos[0] /= 2; 
+    for (size_t i = 0; i < N; ++i) {
+        Velocity v = randomSphere<Unit<num_t>>() * maxV;
+        v *= randomShift();
+        
+        Position rv = randomInCube(pos);
+        
+        if(half == 1) 
+            rv[0] += pos[0];
+
+        m_atoms.push_back(GasAtom{rv, v, m, r});
     }
 }
 

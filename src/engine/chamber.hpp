@@ -57,6 +57,8 @@ public:
 
     void fillRandomAxis(size_t N, VelocityVal maxV, Mass m, Length r, size_t axis = 0);
 
+    void fillRandomHalf(size_t N, VelocityVal maxV, Mass m, Length r, int half);
+
     void updateCellSize();
 
     void setWalls(Position pos) {

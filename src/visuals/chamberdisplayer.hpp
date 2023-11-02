@@ -23,10 +23,13 @@ public:
     enum class ColorPolicy {
         SingleColor,
         HeatColor,
+        MassColor,
     };
 
     ColorPolicy m_colorPolicy = ColorPolicy::HeatColor;
 
+
+    void setColorPolicy(ColorPolicy newColorPolicy);
 
 private:
     std::array<std::pair<QPoint, QColor>, 1024> m_record;

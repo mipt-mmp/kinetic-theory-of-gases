@@ -1,4 +1,5 @@
 #include "chamberdisplayer.hpp"
+#include "physconstants.hpp"
 #include <QBrush>
 #include <QDateTimeEdit>
 #include <QDebug>
@@ -17,10 +18,16 @@ ChamberDisplayer::ChamberDisplayer(phys::Chamber::Metrics& metrics, QWidget* par
     QPalette pal = QPalette();
     pal.setColor(QPalette::Window, Qt::white);
     setAutoFillBackground(true);
+    m_record.fill(std::make_pair(QPoint{}, QColor("transparent")));
     setPalette(pal);
 }
 
 ChamberDisplayer::~ChamberDisplayer() {}
+
+void ChamberDisplayer::setColorPolicy(ColorPolicy newColorPolicy)
+{
+    m_colorPolicy = newColorPolicy;
+}
 
 void ChamberDisplayer::setFollowIdx(int newFollowIdx)
 {
@@ -77,12 +84,12 @@ void ChamberDisplayer::paintEvent(QPaintEvent* /*event*/) {
         QPoint pt{static_cast<int>(pixscale * *((atom.getPos().X()) / m_scale)) - radius,
                   static_cast<int>(pixscale * *((atom.getPos().Y()) / m_scale)) - radius};
         painter.drawEllipse(pt.x(), pt.y(), 2 * radius, 2 * radius);
-        if(i == m_followIdx) {
+        if(i == m_followIdx + 1) {
             m_record[m_recordIdx++ % m_record.size()] = {pt, color};
         }
     }
     if(m_follow) {       
-        for(size_t j = 1; j < m_record.size(); ++j) {
+        for(size_t j = 1; j < m_record.size() - 1; ++j) {
             QColor color = m_record[(m_recordIdx + j) % m_record.size()].second;
             QColor colorNext = m_record[(m_recordIdx + j + 1) % m_record.size()].second;
             if(colorNext == QColor("transparent"))
@@ -110,6 +117,14 @@ QColor ChamberDisplayer::getColor(const phys::GasAtom& atom) const {
         int hue = std::min(200, static_cast<int>(*atom.getKinetic() * 0.2e23));
         return QColor::fromHsv(200 - hue, 250, 250);
     }
+    case ColorPolicy::MassColor:
+        if(atom.getMass() == phys::num_t{131}  * phys::consts::Dalton)
+            return Qt::magenta;
+
+        if(atom.getMass() == phys::num_t{4}  * phys::consts::Dalton)
+            return Qt::blue;
+
+        return Qt::black;
     }
     return Qt::magenta;
 }

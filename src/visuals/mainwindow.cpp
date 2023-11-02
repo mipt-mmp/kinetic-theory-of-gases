@@ -11,13 +11,13 @@ const constexpr phys::Length XSize = 5e-7_m;
 const constexpr phys::Length YSize = 5e-7_m;
 const constexpr phys::Length ZSize = 1e-7_m;
 
-
+#define PRESET 2
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_chamber({XSize, YSize, ZSize})
-    // , m_chamber({5e-6_m, 5e-6_m})
+    // , m_chamber({XSize, YSize})
     , m_physThread(new PhysicsThread(m_chamber, this)) {
 
     m_cd = new ChamberDisplayer(m_chamberMetrics, this);
@@ -25,8 +25,21 @@ MainWindow::MainWindow(QWidget* parent)
     m_cd->setScale(XSize);
     //    m_chamber.fillRandom(400, 1e-7_m / 1_sec, phys::num_t{4} * phys::consts::Dalton,
     //    31e-12_m);
-//    m_chamber.fillRandomAxis(10'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
-     m_chamber.fillRandom(100'000, 4e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+
+    #if PRESET == 0
+    m_chamber.fillRandomAxis(100'000, 1e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    #elif PRESET == 1
+    m_chamber.fillRandom(100'000, 4e3_m / 1_sec, phys::num_t{4} * phys::consts::Dalton, 31e-12_m);
+    #elif PRESET == 2
+    m_cd->setScale(XSize * phys::num_t{0.1});
+    m_chamber.setWalls({XSize * phys::num_t{0.1}, YSize * phys::num_t{0.1}, ZSize * phys::num_t{0.1}});
+    m_chamber.fillRandomHalf(2'500, 4e3_m / 1_sec, phys::num_t{4}   * phys::consts::Dalton, 31e-12_m, 0);
+    m_chamber.fillRandomHalf(2'500, 1e2_m / 1_sec, phys::num_t{131} * phys::consts::Dalton, 108e-12_m, 1);
+
+    m_chamber.fillRandomHalf(50'000, 4e3_m / 1_sec, phys::num_t{4}   * phys::consts::Dalton, 31e-12_m, 0);
+    m_chamber.fillRandomHalf(50'000, 1e2_m / 1_sec, phys::num_t{131} * phys::consts::Dalton, 108e-12_m, 1);
+    m_cd->setColorPolicy(ChamberDisplayer::ColorPolicy::MassColor);
+    #endif
 
     m_timer = new QTimer(this);
     m_timer->setInterval(1000 / 60); // 60 fps
