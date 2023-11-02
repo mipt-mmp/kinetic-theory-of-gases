@@ -1,0 +1,83 @@
+\documentclass{beamer}
+
+\usepackage{cmap}
+\usepackage{mathtext}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools}
+\usepackage{listings}
+
+\title{Celestial Mechanics: Final Recap}
+
+\usetheme{Berlin}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\section{Optimization}
+
+\begin{frame}[fragile]{Problem}
+  Сейчас наша модель, в силу своей простоты, довольно медленная и поддерживает симуляцияю лишь
+  малого числа частиц (до 1000). Соответсвенно, цель - добваить поодержку для большего числа частиц.
+\end{frame}
+
+\begin{frame}[fragile]{Solution}
+  Создадим определенный grid в нашем пространстве, разбив его тем самым на блоки. Будем детектить
+  столкновения в рамках только одного блока. Сложность все еще останется квадратичной, но константа
+  будет сильно меньше.
+  \newline
+  \newline
+  \pause
+  Заметим, что этот алгоритм очень хорошо ложится на несколько потоков. Поэтому распараллелим его
+  (пока только на CPU).
+\end{frame}
+
+\begin{frame}[fragile]{Solution}
+  Step 1: Для каждой частицы считаем хеш (который можно воспринимать как просто id блока частицы,
+  соответсвенно, у частиц из одного блока хеш будет одинаковый)
+  \newline
+  \newline
+  $HASH = (a.x \div CELLSIZE) \ll XSHIFT \; \vert \; (a.y \div CELLSIZE) \ll YSHIFT \; \vert \; (a.z \div CELLSIZE) \ll ZSHIFT$
+  \newline
+  \newline
+  \pause
+  Step 2: Radix Sort по хещам частиц ($O(N)$)
+  \newline
+  \newline
+  \pause
+  Step 3: Проверить коллизии для каждого блока
+\end{frame}
+
+\begin{frame}[fragile]{Problem}
+  Имеет ли смысл параллелить на видеокарте?
+  \newline
+  \newline
+  \pause
+  Видимо, нет, ведь, распараллелив алгоритм на CPU, мы уже получили возможность запускать симуляцияю
+  на несколько сотен тысяч частиц ($\sim 700000$)
+\end{frame}
+
+\section{Joule-Thomson Hypothesis}
+
+\begin{frame}[fragile]{Problem}
+  Проверить, выполняется ли гипотеза Джоуля-Томсона (об изменении температуры газа, приближенного по
+  свойствам к идеальному, при медленном его просачивании через дырку).
+\end{frame}
+
+\begin{frame}[fragile]{Solution}
+  Сделаем дырку в нашем сосуде.
+  \newline
+  \newline
+  \pause
+  Заметим, что через дырку выходят преимущественно красные частицы (они же горячие, они же быстрые).
+  \newline
+  \newline
+  \pause
+  Гипотеза проверена. Profit.
+\end{frame}
+
+\end{document}
