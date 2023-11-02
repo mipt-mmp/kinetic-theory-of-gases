@@ -1,7 +1,8 @@
 # Fdb version 3
-["pdflatex"] 1698932094 "/home/stanislav/mmp-course/kinetic-theory-of-gases/progress/week_2/main.tex" "main.pdf" "main" 1698932096
+["pdflatex"] 1698932907 "/home/stanislav/mmp-course/kinetic-theory-of-gases/progress/week_2/main.tex" "main.pdf" "main" 1698932911
   "/etc/texmf/web2c/texmf.cnf" 1672415544 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/stanislav/.texlive2021/texmf-var/fonts/pk/ljfour/lh/lh-t2a/lass0600.600pk" 1696441208 11872 8f33b97fac222973e467cc710de23f44 ""
+  "/home/stanislav/.texlive2021/texmf-var/fonts/pk/ljfour/lh/lh-t2a/lass0800.600pk" 1696441214 15360 0feeeefb2f859080a034e96666a4d8f4 ""
   "/home/stanislav/.texlive2021/texmf-var/fonts/pk/ljfour/lh/lh-t2a/lass1095.600pk" 1696441205 20984 6606dfca696f6c6926e87901108e2f47 ""
   "/home/stanislav/.texlive2021/texmf-var/fonts/pk/ljfour/lh/lh-t2a/lass1440.600pk" 1696441211 27292 9f3afd7ccc47ead6019474ce9fa68c56 ""
   "/home/stanislav/.texlive2021/texmf-var/fonts/tfm/lh/lh-t2a/larm0600.tfm" 1686487620 3248 7c0b9d76a2cd84ed06764a4c6eea5de4 ""
@@ -12,7 +13,7 @@
   "/home/stanislav/.texlive2021/texmf-var/fonts/tfm/lh/lh-t2a/lass0800.tfm" 1696441214 3264 26b079dff50e667b3da4d5604970d303 ""
   "/home/stanislav/.texlive2021/texmf-var/fonts/tfm/lh/lh-t2a/lass1095.tfm" 1696441205 3332 7d553688e65d94749468cb72214713ce ""
   "/home/stanislav/.texlive2021/texmf-var/fonts/tfm/lh/lh-t2a/lass1440.tfm" 1696441211 3316 74d2bae6468930ee61fdea11798112e7 ""
-  "/home/stanislav/mmp-course/kinetic-theory-of-gases/progress/week_2/main.tex" 1698932092 3351 3e5ca7c56a7eeb960b4e739bdf650f45 ""
+  "/home/stanislav/mmp-course/kinetic-theory-of-gases/progress/week_2/main.tex" 1698932903 4681 143f303953378551b25d80211bb74087 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1246382020 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -226,11 +227,11 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1644012257 39432 7155514e09a3d69036fac785183a21c2 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1686487599 4039269 0eb0d0974b6f8f41bdd5da49d5616c1b ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1686487343 1480927 a8686a7660eb0c94f96b559e7e565dc6 ""
-  "main.aux" 1698932095 2568 62f193f4462aeb907520b3d56818e64c "pdflatex"
-  "main.nav" 1698932095 1186 5dd5be4e712e6e9e0969d7aac154908d "pdflatex"
-  "main.out" 1698932095 269 549286115db64247127a4730952c7b4f "pdflatex"
-  "main.tex" 1698932092 3351 3e5ca7c56a7eeb960b4e739bdf650f45 ""
-  "main.vrb" 1698932095 366 7917597fa3fed9c06914fe1c2935553a "pdflatex"
+  "main.aux" 1698932910 4016 45045332bf1f25f120907d6fe960578b "pdflatex"
+  "main.nav" 1698932910 2104 980155cf7b2ead89870871047f8a10eb "pdflatex"
+  "main.out" 1698932910 513 ce7d35c8b228dd13df37b8f0bde27d5b "pdflatex"
+  "main.tex" 1698932903 4681 143f303953378551b25d80211bb74087 ""
+  "main.vrb" 1698932910 416 5f34baff503a0e4e2cd20bd66cdb1dce "pdflatex"
   (generated)
   "main.aux"
   "main.log"
